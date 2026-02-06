@@ -1,0 +1,54 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Login";
+    ViewData["BodyClass"] = "auth-page";
+    ViewData["MainClass"] = "auth-main";
+}
+
+<section class="auth-wrapper" aria-labelledby="login-title">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <img class="brand-logo" src="~/images/simbolo_positivo.svg" alt="Logotipo PROMETHEUS RFID"
+                 data-i18n-target="alt" data-i18n-en="PROMETHEUS RFID logo" />
+            <div class="brand-copy" style="margin: auto">
+                <h1 class="brand-title">PROMETHEUS RFID</h1>
+                <p class="brand-subtitle" data-i18n-en="Designed for Precision">Desenvolvido para precisão</p>
+            </div>
+        </div>
+        <form method="post" asp-page="/Login" asp-antiforgery="true" class="auth-form" novalidate>
+            <div class="auth-language-toggle" data-language-switcher role="group" aria-label="Selecionar idioma"
+                 data-i18n-target="aria-label" data-i18n-en="Select language">
+                <span class="sr-only" data-i18n-en="Choose the interface language">Escolha o idioma da interface</span>
+                <button type="button" class="auth-language-toggle-button is-active" data-language-option="pt" aria-pressed="true">
+                    PT
+                </button>
+                <button type="button" class="auth-language-toggle-button" data-language-option="en" aria-pressed="false">
+                    EN
+                </button>
+            </div>
+            <h2 id="login-title" data-i18n-en="Welcome back">Bem-vindo de volta</h2>
+            <p class="form-intro" data-i18n-en="Access the dashboard to keep managing costs with precision.">Acesse o painel para continuar gerenciando custos com precisão.</p>
+
+            <div class="form-error" asp-validation-summary="ModelOnly" role="alert"></div>
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div class="form-field">
+                <label asp-for="Username" data-i18n-en="Username or email"></label>
+                <input asp-for="Username" autocomplete="username" />
+                <span class="form-error" asp-validation-for="Username"></span>
+            </div>
+
+            <div class="form-field">
+                <label asp-for="Password" data-i18n-en="Password"></label>
+                <input asp-for="Password" autocomplete="current-password" />
+                <span class="form-error" asp-validation-for="Password"></span>
+            </div>
+
+            <div class="auth-actions">
+                <button type="submit" class="auth-button" data-i18n-en="Sign in">Entrar</button>
+                 <!--<a class="auth-button auth-button-secondary" href="/Register" data-i18n-en="Register">Registar</a>-->
+            </div>
+        </form>
+    </div>
+</section>

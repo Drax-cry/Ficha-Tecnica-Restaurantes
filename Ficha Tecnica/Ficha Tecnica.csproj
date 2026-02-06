@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Ficha_Tecnica</RootNamespace>
+    <UserSecretsId>5e8e444e-f0cf-4002-8790-41ff7e17f4c2</UserSecretsId>
+</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MySql.Data" Version="9.4.0" />
+    <PackageReference Include="MySqlConnector" Version="2.3.6" />
+    <PackageReference Include="QuestPDF" Version="2024.2.6" />
+    <PackageReference Include="Google.Cloud.Storage.V1" Version="4.8.0" />
+    <PackageReference Include="Google.Cloud.Diagnostics.AspNetCore3" Version="4.8.0" />
+  </ItemGroup>
+
+</Project>

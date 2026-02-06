@@ -1,0 +1,54 @@
+@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Criar conta";
+    ViewData["BodyClass"] = "auth-page";
+    ViewData["MainClass"] = "auth-main";
+}
+
+<section class="auth-wrapper" aria-labelledby="register-title">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <img class="brand-logo" src="~/images/simbolo_positivo.svg" alt="Logotipo PROMETHEUS RFID" />
+            <div class="brand-copy" style="margin: auto">
+                <h1 class="brand-title">PROMETHEUS RFID</h1>
+                <p class="brand-subtitle">Designed for Precision</p>
+            </div>
+        </div>
+        <form method="post" class="auth-form" novalidate>
+            <h2 id="register-title">Criar conta</h2>
+            <p class="form-intro">Complete os dados para começar a gerir os custos da sua operação.</p>
+
+            <div class="form-error" asp-validation-summary="ModelOnly" role="alert"></div>
+
+            <div class="form-field">
+                <label asp-for="Input.Username"></label>
+                <input asp-for="Input.Username" autocomplete="username" />
+                <span class="form-error" asp-validation-for="Input.Username"></span>
+            </div>
+
+            <div class="form-field">
+                <label asp-for="Input.Email"></label>
+                <input asp-for="Input.Email" autocomplete="email" />
+                <span class="form-error" asp-validation-for="Input.Email"></span>
+            </div>
+
+            <div class="form-field">
+                <label asp-for="Input.Password"></label>
+                <input asp-for="Input.Password" autocomplete="new-password" />
+                <span class="form-error" asp-validation-for="Input.Password"></span>
+            </div>
+
+            <div class="form-field">
+                <label asp-for="Input.ConfirmPassword"></label>
+                <input asp-for="Input.ConfirmPassword" autocomplete="new-password" />
+                <span class="form-error" asp-validation-for="Input.ConfirmPassword"></span>
+            </div>
+
+            <div class="auth-actions">
+                <button type="submit" class="auth-button">Criar conta</button>
+                <a class="auth-button auth-button-secondary" href="/Login">Já tenho uma conta</a>
+            </div>
+        </form>
+    </div>
+</section>

@@ -1,0 +1,499 @@
+@page "/Ingredients"
+@model Ficha_Tecnica.Pages.IngredientsModel
+@{
+    ViewData["Title"] = "Ingredientes";
+    ViewData["BodyClass"] = "ingredients-page";
+}
+
+<section class="ingredients-shell" aria-labelledby="ingredients-title">
+    <header class="ingredients-hero">
+        <div class="ingredients-hero-content">
+            <p class="ingredients-eyebrow" data-i18n-en="Ingredient management">Gestão de insumos</p>
+            <h1 id="ingredients-title" data-i18n-en="Ingredients">Ingredientes</h1>
+            <p class="ingredients-description" data-i18n-en="Register, update, and monitor ingredients with suppliers, categories, and standardized costs.">
+                Cadastre, atualize e acompanhe os ingredientes com fornecedores, categorias e custos padronizados.
+            </p>
+            <div class="ingredients-hero-actions" aria-label="Ações principais" data-i18n-target="aria-label" data-i18n-en="Primary actions">
+                <button type="button" class="ingredients-action primary" data-ingredient-new>
+                    <span class="action-icon" aria-hidden="true">@Model.RenderIcon("add")</span>
+                    <span data-i18n-en="New ingredient">Novo ingrediente</span>
+                </button>
+                <!--<button type="button" class="ingredients-action ghost">
+                    <span class="action-icon" aria-hidden="true">@Model.RenderIcon("import")</span>
+                    Importar lista
+                </button>-->
+            </div>
+        </div>
+        <div class="ingredients-hero-highlight" role="presentation">
+            <div class="highlight-icon" aria-hidden="true">
+                @Model.RenderIcon("inventory")
+            </div>
+            <dl class="highlight-stats">
+                <div>
+                    <dt data-i18n-en="Active ingredients">Ingredientes ativos</dt>
+                    <dd>@Model.Ingredients.Count</dd>
+                </div>
+                <div>
+                    <dt data-i18n-en="Monitored categories">Categorias monitoradas</dt>
+                    <dd>@Model.Categories.Count</dd>
+                </div>
+                <div>
+                    <dt data-i18n-en="Connected suppliers">Fornecedores integrados</dt>
+                    <dd>@Model.Suppliers.Count</dd>
+                </div>
+            </dl>
+        </div>
+    </header>
+
+    <div class="ingredients-main-grid">
+        <section class="ingredients-panel" aria-labelledby="ingredient-form-title">
+            <header class="panel-header">
+                <h2 id="ingredient-form-title"
+                    data-mode-title-create="Adicionar ingrediente"
+                    data-mode-title-create-en="Add ingredient"
+                    data-mode-title-edit="Editar ingrediente"
+                    data-mode-title-edit-en="Edit ingredient"
+                    data-mode-title-price="Atualizar preço do ingrediente"
+                    data-mode-title-price-en="Update ingredient price"
+                    data-i18n-en="Add ingredient">Adicionar ingrediente</h2>
+                <p data-i18n-en="Select category, supplier, costs, and measurement unit to keep ingredient data consistent.">Selecione categoria, fornecedor, custos e unidade de medida para manter os dados padronizados.</p>
+            </header>
+            @if (!string.IsNullOrWhiteSpace(Model.StatusMessage) && string.Equals(Model.StatusMessageTarget, "Ingredient", System.StringComparison.Ordinal))
+            {
+                <div class="form-success" role="status" data-i18n-en="@(Model.StatusMessageEn ?? Model.StatusMessage)">@Model.StatusMessage</div>
+            }
+            <form method="post" class="ingredient-form" asp-page-handler="SaveIngredient" aria-describedby="ingredient-form-title">
+                <div class="form-error" asp-validation-summary="ModelOnly"></div>
+                <input type="hidden" asp-for="IngredientInput.Id" />
+                <fieldset class="form-section">
+                    <legend>
+                        <span class="section-icon" aria-hidden="true">@Model.RenderIcon("details")</span>
+                        <span data-i18n-en="Key information">Informações principais</span>
+                    </legend>
+                    <div class="form-grid">
+                        <label class="form-field" for="ingredient-name">
+                            <span class="field-label" data-i18n-en="Ingredient name">Nome do ingrediente</span>
+                            <span class="field-input with-icon">
+                                <span class="input-icon" aria-hidden="true">@Model.RenderIcon("ingredient")</span>
+                                <input id="ingredient-name" asp-for="IngredientInput.Name" type="text" placeholder="Ex.: Farinha de trigo especial" autocomplete="off" data-i18n-target="placeholder" data-i18n-en="e.g., Premium wheat flour" />
+                            </span>
+                            <span class="form-error" asp-validation-for="IngredientInput.Name"></span>
+                        </label>
+                        <label class="form-field" for="ingredient-category">
+                            <span class="field-label" data-i18n-en="Category">Categoria</span>
+                            <span class="field-input with-icon">
+                                <span class="input-icon" aria-hidden="true">@Model.RenderIcon("category")</span>
+                                <select id="ingredient-category" asp-for="IngredientInput.CategoryId">
+                                    <option value="" data-i18n-en="Select a category">Selecione uma categoria</option>
+                                    @foreach (var category in Model.Categories)
+                                    {
+                                        var isSelected = Model.IngredientInput.CategoryId.HasValue && Model.IngredientInput.CategoryId.Value.ToString() == category.Value;
+                                        <option value="@category.Value" selected="@(isSelected ? "selected" : null)" data-i18n-en="@((category.LabelEn ?? category.Label))">@category.Label</option>
+                                    }
+                                </select>
+                            </span>
+                            <span class="form-error" asp-validation-for="IngredientInput.CategoryId"></span>
+                        </label>
+                        <label class="form-field" for="ingredient-supplier">
+                            <span class="field-label" data-i18n-en="Supplier">Fornecedor</span>
+                            <span class="field-input with-icon" >
+                                <span class="input-icon" aria-hidden="true">@Model.RenderIcon("supplier")</span>
+                                <select id="ingredient-supplier" asp-for="IngredientInput.Supplier">
+                                    <option value="" data-i18n-en="Select a supplier">Selecione um fornecedor</option>
+                                    @foreach (var supplier in Model.SupplierOptions)
+                                    {
+                                        var isSelected = string.Equals(Model.IngredientInput.Supplier, supplier.Value, System.StringComparison.OrdinalIgnoreCase);
+                                        <option value="@supplier.Value" selected="@(isSelected ? "selected" : null)" data-i18n-en="@((supplier.LabelEn ?? supplier.Label))">@supplier.Label</option>
+                                    }
+                                </select>
+                            </span>
+                            <span class="form-error" asp-validation-for="IngredientInput.Supplier"></span>
+                        </label>
+                        <label class="form-field" for="ingredient-total">
+                            <span class="field-label" data-i18n-en="Total cost (€)">Valor total (€)</span>
+                            <span class="field-input with-icon">
+                                <span class="input-icon" aria-hidden="true">@Model.RenderIcon("currency")</span>
+                                <input id="ingredient-total" asp-for="IngredientInput.TotalCost" type="number" step="0.01" placeholder="0,00" inputmode="decimal" data-i18n-target="placeholder" data-i18n-en="0.00" />
+                            </span>
+
+                            <span class="form-error" asp-validation-for="IngredientInput.TotalCost"></span>
+                        </label>
+                        <div class="form-field measurement-field">
+
+                            <span id="ingredient-unit-label" class="field-label" data-i18n-en="Measurement unit">
+                                <span class="input-icon" aria-hidden="true">@Model.RenderIcon("measurement")</span>
+                                Unidade de medida
+                            </span>
+
+                            <div class="measurement-options" role="radiogroup" aria-labelledby="ingredient-unit-label">
+                                @foreach (var unit in Model.MeasurementUnits)
+                                {
+                                    <label class="measurement-option">
+                                        <input type="radio" asp-for="IngredientInput.Unit" value="@unit.Value" id="ingredient-unit-@unit.Value" />
+                                        <span class="measurement-shell">
+                                            <span class="measurement-icon" aria-hidden="true">@Model.RenderIcon(unit.IconKey)</span>
+                                            <span class="measurement-info">
+                                                <span class="measurement-label" data-i18n-en="@((unit.LabelEn ?? unit.Label))">@unit.Label</span>
+                                                <span class="measurement-description" data-i18n-en="@((unit.DescriptionEn ?? unit.Description))">@unit.Description</span>
+                                            </span>
+                                        </span>
+                                    </label>
+                                }
+                            </div>
+                            <span class="form-error" asp-validation-for="IngredientInput.Unit"></span>
+                        </div>
+                        
+                    </div>
+
+                    <label class="form-field" for="ingredient-quantity">
+                        <span class="field-label" data-i18n-en="Quantity for the selected unit">Quantidade na unidade selecionada</span>
+                        <span class="field-input with-icon">
+                            <span class="input-icon" aria-hidden="true">@Model.RenderIcon("unit-qty")</span>
+                            <input id="ingredient-quantity" asp-for="IngredientInput.PackageQuantity" type="number" step="0.01" placeholder="Ex.: 3" inputmode="decimal" data-i18n-target="placeholder" data-i18n-en="e.g., 3" />
+                        </span>
+                        <span class="field-helper" data-i18n-en="Provide the volume or weight according to the selected unit.">Informe o volume ou peso conforme a unidade marcada acima.</span>
+                        <span class="form-error" asp-validation-for="IngredientInput.PackageQuantity"></span>
+                    </label>
+                    <label class="form-field" for="ingredient-notes">
+                        <span class="field-label" data-i18n-en="Notes">Observações</span>
+                        <span class="field-input with-icon">
+                            <span class="input-icon" aria-hidden="true">@Model.RenderIcon("notes")</span>
+                            <textarea id="ingredient-notes" asp-for="IngredientInput.Notes" rows="3" placeholder="Informações adicionais sobre conservação, validade ou substituições." data-i18n-target="placeholder" data-i18n-en="Additional details about storage, shelf life, or substitutions."></textarea>
+                        </span>
+                        <span class="form-error" asp-validation-for="IngredientInput.Notes"></span>
+                    </label>
+                </fieldset>
+
+                <div class="form-actions">
+                    <button type="submit" class="ingredients-action primary" data-ingredient-submit>
+                        <span class="action-icon" aria-hidden="true">@Model.RenderIcon("save")</span>
+                        <span data-ingredient-submit-label
+                              data-mode-submit-create="Salvar ingrediente"
+                              data-mode-submit-create-en="Save ingredient"
+                              data-mode-submit-edit="Atualizar ingrediente"
+                              data-mode-submit-edit-en="Update ingredient"
+                              data-mode-submit-price="Atualizar preço"
+                              data-mode-submit-price-en="Update price"
+                              data-i18n-en="Save ingredient">Salvar ingrediente</span>
+                    </button>
+                    <button type="reset" class="ingredients-action ghost">
+                        <span class="action-icon" aria-hidden="true">@Model.RenderIcon("reset")</span>
+                        <span data-i18n-en="Clear fields">Limpar campos</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+       
+
+        <section class="ingredients-panel" aria-labelledby="ingredient-library-title">
+            <header class="panel-header">
+                <h2 id="ingredient-library-title" data-i18n-en="Registered ingredients">Ingredientes cadastrados</h2>
+                <p data-i18n-en="Review current costs, suppliers, and associated categories.">Visualize custos atualizados, fornecedores e categorias associadas.</p>
+            </header>
+
+            <div class="ingredient-toolbar" aria-label="Filtros de ingredientes" data-i18n-target="aria-label" data-i18n-en="Ingredient filters">
+                <label class="toolbar-filter" for="filter-category">
+                    <span class="toolbar-icon" aria-hidden="true">@Model.RenderIcon("category")</span>
+                    <span class="sr-only" data-i18n-en="Filter ingredients by category">Filtrar ingredientes por categoria</span>
+                    <select id="filter-category" name="filter-category">
+                        <option value="all" selected data-i18n-en="All groups">Todos os grupos</option>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category.Value" data-i18n-en="@((category.LabelEn ?? category.Label))">@category.Label</option>
+                        }
+                    </select>
+                </label>
+                <label class="toolbar-filter" for="filter-supplier">
+                    <span class="toolbar-icon" aria-hidden="true">@Model.RenderIcon("supplier")</span>
+                    <span class="sr-only" data-i18n-en="Filter ingredients by supplier">Filtrar ingredientes por fornecedor</span>
+                    <select id="filter-supplier" name="filter-supplier">
+                        <option value="all" selected data-i18n-en="All suppliers">Todos os fornecedores</option>
+                        @foreach (var supplier in Model.SupplierOptions)
+                        {
+                            <option value="@supplier.Value" data-i18n-en="@((supplier.LabelEn ?? supplier.Label))">@supplier.Label</option>
+                        }
+                    </select>
+                </label>
+                <label class="toolbar-filter" for="filter-unit">
+                    <span class="toolbar-icon" aria-hidden="true">@Model.RenderIcon("measurement")</span>
+                    <span class="sr-only" data-i18n-en="Filter ingredients by measurement unit">Filtrar ingredientes por unidade de medida</span>
+                    <select id="filter-unit" name="filter-unit">
+                        <option value="all" selected data-i18n-en="All units">Todas as unidades</option>
+                        @foreach (var unit in Model.MeasurementUnits)
+                        {
+                            <option value="@unit.Value" data-i18n-en="@((unit.LabelEn ?? unit.Label))">@unit.Label</option>
+                        }
+                    </select>
+                </label>
+                <label class="toolbar-search" for="filter-search">
+                    <span class="toolbar-icon" aria-hidden="true">@Model.RenderIcon("search")</span>
+                    <span class="sr-only" data-i18n-en="Search ingredients by name, supplier, or category">Buscar ingredientes por nome, fornecedor ou categoria</span>
+                    <input id="filter-search" name="filter-search" type="search" placeholder="Buscar por nome, fornecedor ou categoria" autocomplete="off" data-i18n-target="placeholder" data-i18n-en="Search by name, supplier, or category" />
+                </label>
+            </div>
+
+            <ul class="ingredient-list">
+                @if (Model.Ingredients.Count == 0)
+                {
+                    <li class="ingredient-empty" role="status">
+                        <span data-i18n-en="No ingredients registered yet. Use the form to add the first item.">Nenhum ingrediente cadastrado até o momento. Utilize o formulário ao lado para adicionar o primeiro item.</span>
+                    </li>
+                }
+                else
+                {
+                    foreach (var ingredient in Model.Ingredients)
+                    {
+                        <li class="ingredient-card"
+                            data-ingredient-id="@ingredient.Id"
+                            data-ingredient-name="@ingredient.Name"
+                            data-ingredient-category-id="@(ingredient.CategoryId?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty)"
+                            data-ingredient-category-label="@ingredient.Category"
+                            data-ingredient-category-label-en="@ingredient.CategoryEn"
+                            data-ingredient-supplier="@(ingredient.Supplier ?? string.Empty)"
+                            data-ingredient-unit="@ingredient.Unit"
+                            data-ingredient-quantity="@ingredient.PackageQuantity.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                            data-ingredient-total="@ingredient.TotalCost.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                            data-ingredient-notes="@(ingredient.Notes?.ReplaceLineEndings(" ") ?? string.Empty)">
+                            <details class="ingredient-card-details">
+
+                                <summary class="ingredient-card-summary">
+
+                                    <span class="ingredient-avatar" aria-hidden="true">@Model.RenderIcon(ingredient.IconKey)</span>
+
+                                    <div class="ingredient-card-overview">
+                                        <h3>@ingredient.Name</h3>
+                                        <p class="ingredient-card-category" data-i18n-en="@ingredient.CategoryEn">@ingredient.Category</p>
+                                    </div>
+
+                                    <span class="ingredient-card-caret" aria-hidden="true">@Model.RenderIcon("caret")</span>
+                                </summary>
+
+                                <div class="ingredient-card-body">
+                                    <div class="ingredient-card-actions" aria-label="Ações do ingrediente" data-i18n-target="aria-label" data-i18n-en="Ingredient actions">
+                                        <button type="button" class="icon-button" title="Editar ingrediente" aria-label="Editar ingrediente" data-ingredient-edit data-i18n-target="title,aria-label" data-i18n-en="Edit ingredient">
+                                            @Model.RenderIcon("edit")
+                                        </button>
+                                        <button type="button" class="icon-button" title="Atualizar preço" aria-label="Atualizar preço" data-ingredient-price data-i18n-target="title,aria-label" data-i18n-en="Update price">
+                                            @Model.RenderIcon("price")
+                                        </button>
+                                    </div>
+                                    <dl class="ingredient-meta">
+                                        <div>
+                                            <dt data-i18n-en="Supplier">Fornecedor</dt>
+                                            <dd data-i18n-en="@ingredient.SupplierLabelEn">@ingredient.SupplierLabel</dd>
+                                        </div>
+                                        <div>
+                                            <dt data-i18n-en="Total cost">Valor total</dt>
+                                            <dd>@ingredient.TotalCostDisplay</dd>
+                                        </div>
+                                        <div>
+                                            <dt data-i18n-en="Available quantity">Quantidade disponível</dt>
+                                            <dd data-i18n-en="@ingredient.PackageQuantityDisplayEn">@ingredient.PackageQuantityDisplay</dd>
+                                        </div>
+                                        <div>
+                                            <dt data-i18n-en="Cost per @ingredient.MeasurementLabelEn">Custo por @ingredient.MeasurementLabel</dt>
+                                            <dd>@ingredient.CostPerUnitDisplay</dd>
+                                        </div>
+                                    </dl>
+                                    <footer class="ingredient-card-footer">
+                                        <span class="ingredient-status">
+                                            <span class="status-icon" aria-hidden="true">@Model.RenderIcon("sync")</span>
+                                            <span data-i18n-en="Updated">Atualizado</span>
+                                            <span data-ingredient-last-update data-last-update-pt="@ingredient.LastUpdate" data-last-update-en="@ingredient.LastUpdateEn">@ingredient.LastUpdate</span>
+                                        </span>
+                                        <button type="button" class="ingredients-action subtle">
+                                            <span class="action-icon" aria-hidden="true">@Model.RenderIcon("link")</span>
+                                            <span data-i18n-en="View linked recipes">Ver receitas associadas</span>
+                                        </button>
+                                    </footer>
+                                </div>
+                            </details>
+                        </li>
+                    }
+                }
+            </ul>
+        </section>
+
+
+
+        <section class="ingredients-panel categories-panel" aria-labelledby="ingredient-category-title">
+            <header class="panel-header">
+                <h2 id="ingredient-category-title" data-i18n-en="Ingredient categories">Categorias de ingredientes</h2>
+                <p data-i18n-en="Create new categories to organize supplies and keep visibility of existing groups.">Crie novas categorias para organizar os insumos e mantenha visibilidade dos grupos existentes.</p>
+            </header>
+
+            @if (!string.IsNullOrWhiteSpace(Model.StatusMessage) && string.Equals(Model.StatusMessageTarget, "Category", System.StringComparison.Ordinal))
+            {
+                <div class="form-success" role="status" data-i18n-en="@(Model.StatusMessageEn ?? Model.StatusMessage)">@Model.StatusMessage</div>
+            }
+
+            <form method="post" class="category-form" asp-page-handler="CreateCategory" aria-describedby="ingredient-category-title">
+                <div class="form-error" asp-validation-summary="ModelOnly"></div>
+                <div class="category-form-grid">
+                    <label class="form-field" for="category-name">
+                        <span class="field-label" data-i18n-en="Category name">Nome da categoria</span>
+                        <span class="field-input with-icon">
+                            <span class="input-icon" aria-hidden="true">@Model.RenderIcon("category")</span>
+                            <input id="category-name" asp-for="CategoryInput.Name" type="text" placeholder="Ex.: Vegetais orgânicos" autocomplete="off" data-i18n-target="placeholder" data-i18n-en="e.g., Organic vegetables" />
+                        </span>
+                        <span class="form-error" asp-validation-for="CategoryInput.Name"></span>
+                    </label>
+
+                    <label class="form-field" for="category-icon">
+                        <span class="field-label" data-i18n-en="Representative icon (optional)">Ícone representativo (opcional)</span>
+                        <div class="icon-picker field-input with-icon" data-icon-picker>
+                            <span class="input-icon" aria-hidden="true">@Model.RenderIcon("editors-choice")</span>
+                            <button type="button" class="icon-picker-trigger" data-icon-picker-trigger aria-expanded="false" aria-haspopup="listbox" aria-controls="category-icon-options" id="category-icon-trigger">
+                                <span class="icon-picker-preview" data-icon-picker-preview aria-hidden="true">@Model.RenderIcon("editors-choice")</span>
+                                <span class="icon-picker-text" data-icon-picker-text data-i18n-en="Select an icon (optional)">Selecione um ícone (opcional)</span>
+                                <span class="icon-picker-caret" aria-hidden="true"></span>
+                            </button>
+                            <ul class="icon-picker-options" data-icon-picker-list role="listbox" id="category-icon-options" aria-labelledby="category-icon-trigger" hidden>
+                                @foreach (var icon in Model.CategoryIconOptions)
+                                {
+                                    <li role="option" data-value="@icon.Value" id="category-icon-option-@icon.Value">
+                                        <button type="button" class="icon-picker-option" data-icon-key="@icon.IconKey">
+                                            <span class="icon-picker-preview" aria-hidden="true">@Model.RenderIcon(icon.IconKey)</span>
+                                            <span class="icon-picker-option-label" data-i18n-en="@((icon.LabelEn ?? icon.Label))">@icon.Label</span>
+                                        </button>
+                                    </li>
+                                }
+                            </ul>
+                            <input type="hidden" id="category-icon" asp-for="CategoryInput.IconKey" />
+                        </div>
+                        <span class="form-error" asp-validation-for="CategoryInput.IconKey"></span>
+                    </label>
+                </div>
+                <div class="category-form-actions">
+                    <button type="submit" class="ingredients-action primary">
+                        <span class="action-icon" aria-hidden="true">@Model.RenderIcon("add")</span>
+                        <span data-i18n-en="Save category">Salvar categoria</span>
+                    </button>
+                    <button type="reset" class="ingredients-action ghost">
+                        <span class="action-icon" aria-hidden="true">@Model.RenderIcon("reset")</span>
+                        <span data-i18n-en="Clear data">Limpar dados</span>
+                    </button>
+                </div>
+            </form>
+
+            @if (Model.Categories.Count == 0)
+            {
+                <p class="category-empty" role="status" data-i18n-en="No categories registered yet. Add the first one to start organizing ingredients.">Ainda não há categorias cadastradas. Adicione a primeira para começar a organizar os ingredientes.</p>
+            }
+            else
+            {
+                <div class="category-library" role="list">
+                    @foreach (var category in Model.Categories)
+                    {
+                        <article class="category-card" role="listitem">
+                            <span class="category-icon" aria-hidden="true">@Model.RenderIcon(category.IconKey)</span>
+                            <h3 data-i18n-en="@((category.LabelEn ?? category.Label))">@category.Label</h3>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        <section class="ingredients-panel suppliers-panel" aria-labelledby="supplier-management-title" data-suppliers-section>
+            <header class="panel-header suppliers-header">
+                <div class="suppliers-header-copy">
+                    <h2 id="supplier-management-title" data-supplier-form-title
+                        data-supplier-mode-title-create="Adicionar fornecedor"
+                        data-supplier-mode-title-create-en="Add supplier"
+                        data-supplier-mode-title-edit="Editar fornecedor"
+                        data-supplier-mode-title-edit-en="Edit supplier"
+                        data-i18n-en="Add supplier">Adicionar fornecedor</h2>
+                    <p data-i18n-en="Register and edit partner information, contacts, and supply terms.">Registre e edite informações de parceiros, contatos e condições de fornecimento.</p>
+                </div>
+                <button type="button" class="ingredients-action subtle" data-supplier-new>
+                    <span class="action-icon" aria-hidden="true">@Model.RenderIcon("add")</span>
+                    <span data-i18n-en="New supplier">Novo fornecedor</span>
+                </button>
+            </header>
+
+            <div class="form-success" data-supplier-success hidden role="status"></div>
+            <div class="form-error" data-supplier-error hidden role="alert"></div>
+
+            <form method="post" asp-page-handler="SaveSupplier" class="supplier-form" data-supplier-form aria-describedby="supplier-management-title" novalidate>
+                <input type="hidden" asp-for="SupplierInput.Id" data-supplier-id-input />
+                <div class="supplier-form-grid">
+                    <label class="form-field" for="supplier-name">
+                        <span class="field-label" data-i18n-en="Supplier name">Nome do fornecedor</span>
+                        <span class="field-input with-icon">
+                            <span class="input-icon" aria-hidden="true">@Model.RenderIcon("supplier")</span>
+                            <input id="supplier-name" asp-for="SupplierInput.Name" type="text" placeholder="Ex.: Cooperativa Central" autocomplete="off" data-supplier-name data-i18n-target="placeholder" data-i18n-en="e.g., Central Cooperative" />
+                        </span>
+                    </label>
+
+                    <label class="form-field" for="supplier-info">
+                        <span class="field-label" data-i18n-en="Supplier information">Informações do fornecedor</span>
+                        <span class="field-input with-icon">
+                            <span class="input-icon" aria-hidden="true">@Model.RenderIcon("details")</span>
+                            <textarea id="supplier-info" asp-for="SupplierInput.Notes" rows="3" placeholder="Descreva contatos, condições comerciais e observações relevantes." data-supplier-info-input data-i18n-target="placeholder" data-i18n-en="Describe contacts, commercial terms, and relevant notes."></textarea>
+                        </span>
+                    </label>
+                </div>
+
+                <div class="supplier-form-actions">
+                    <button type="submit" class="ingredients-action primary">
+                        <span class="action-icon" aria-hidden="true">@Model.RenderIcon("save")</span>
+                        <span data-supplier-submit-label
+                              data-supplier-mode-submit-create="Salvar fornecedor"
+                              data-supplier-mode-submit-create-en="Save supplier"
+                              data-supplier-mode-submit-edit="Atualizar fornecedor"
+                              data-supplier-mode-submit-edit-en="Update supplier"
+                              data-i18n-en="Save supplier">Salvar fornecedor</span>
+                    </button>
+                    <button type="reset" class="ingredients-action ghost" data-supplier-cancel>
+                        <span class="action-icon" aria-hidden="true">@Model.RenderIcon("reset")</span>
+                        <span data-i18n-en="Cancel editing">Cancelar edição</span>
+                    </button>
+                </div>
+            </form>
+
+            <p class="supplier-empty" data-supplier-empty @(Model.Suppliers.Count == 0 ? "" : "hidden") data-i18n-en="No suppliers registered yet. Use the form above to start the directory.">Nenhum fornecedor cadastrado até o momento. Utilize o formulário acima para iniciar o diretório.</p>
+
+            <ul class="supplier-list" data-supplier-list @(Model.Suppliers.Count == 0 ? "hidden" : "")>
+                @foreach (var supplier in Model.Suppliers)
+                {
+                    <li class="supplier-card" data-supplier-card data-supplier-id="@supplier.Id" data-supplier-name="@supplier.Name" data-supplier-info="@supplier.Description" data-supplier-info-en="@supplier.DescriptionEn" data-supplier-info-default="@(supplier.HasCustomDescription ? null : "true")">
+                        <article class="supplier-card-shell">
+                            <header class="supplier-card-header">
+                                <span class="supplier-avatar" aria-hidden="true">@Model.RenderIcon("supplier")</span>
+                                <div class="supplier-card-text">
+                                    <h3 data-supplier-name-display>@supplier.Name</h3>
+                                    <p data-supplier-info-display>@supplier.Description</p>
+                                </div>
+                                <button type="button" class="icon-button" title="Editar fornecedor" aria-label="Editar fornecedor" data-supplier-edit data-i18n-target="title,aria-label" data-i18n-en="Edit supplier">
+                                    @Model.RenderIcon("edit")
+                                </button>
+                            </header>
+                        </article>
+                    </li>
+                }
+            </ul>
+
+            <template data-supplier-template>
+                <li class="supplier-card" data-supplier-card>
+                    <article class="supplier-card-shell">
+                        <header class="supplier-card-header">
+                            <span class="supplier-avatar" aria-hidden="true">@Model.RenderIcon("supplier")</span>
+                            <div class="supplier-card-text">
+                                <h3 data-supplier-name-display></h3>
+                                <p data-supplier-info-display></p>
+                            </div>
+                            <button type="button" class="icon-button" title="Editar fornecedor" aria-label="Editar fornecedor" data-supplier-edit data-i18n-target="title,aria-label" data-i18n-en="Edit supplier">
+                                @Model.RenderIcon("edit")
+                            </button>
+                        </header>
+                    </article>
+                </li>
+            </template>
+        </section>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/ingredients.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Ficha Tecnica</title>
+    <link rel="stylesheet" href="/css/site.css" />
+    @RenderSection("Styles", required: false)
+</head>
+@{ var currentPage = ViewContext.RouteData.Values["page"]?.ToString()?.ToLowerInvariant() ?? string.Empty;
+   var showNavigation = currentPage != "/login" && currentPage != "/register";
+   var serverHealthUrl = ViewData["ServerHealthUrl"] as string ?? "/"; }
+
+<body class="@(ViewData["BodyClass"] ?? string.Empty)" data-server-health-url="@serverHealthUrl">
+    <div class="loading-overlay" data-loading-overlay hidden role="status" aria-live="polite" aria-busy="false">
+        <div class="loading-overlay__content">
+            <span class="loading-overlay__spinner" aria-hidden="true"></span>
+            <p class="loading-overlay__message" data-i18n-en="We are processing your request.">
+                Processando sua solicitação...
+            </p>
+        </div>
+    </div>
+    @if (showNavigation)
+    {
+        <header class="app-header" data-nav-root>
+            <div class="nav-shell">
+                <nav class="app-nav" aria-label="Principal" data-i18n-target="aria-label" data-i18n-en="Primary navigation">
+                    <div class="nav-identity">
+                        <a class="nav-logo" href="/" aria-label="PROMETHEUS RFID - Início" data-i18n-target="aria-label" data-i18n-en="PROMETHEUS RFID - Home">
+                            <img src="~/images/logo_horizontal_Positivo.svg" alt="PROMETHEUS RFID" />
+                        </a>
+
+                    </div>
+                    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation">
+                        <span class="sr-only" data-i18n-en="Toggle primary navigation">Alternar menu principal</span>
+                        <span class="nav-toggle-bar" aria-hidden="true"></span>
+                        <span class="nav-toggle-bar" aria-hidden="true"></span>
+                        <span class="nav-toggle-bar" aria-hidden="true"></span>
+                    </button>
+                    <div class="nav-panel" id="primary-navigation">
+                        <ul class="nav-menu" role="list">
+                            <li><a class="nav-menu-link @(currentPage == "/index" ? "is-active" : string.Empty)" href="/Index" @(currentPage == "/index" ? "aria-current=\"page\"" : string.Empty) data-i18n-en="Dashboard">Painel</a></li>
+                            <li><a class="nav-menu-link @(currentPage == "/ingredients" ? "is-active" : string.Empty)" href="/Ingredients" @(currentPage == "/ingredients" ? "aria-current=\"page\"" : string.Empty) data-i18n-en="Ingredients">Ingredientes</a></li>
+                            <li><a class="nav-menu-link @(currentPage == "/recipes" ? "is-active" : string.Empty)" href="/Recipes" @(currentPage == "/recipes" ? "aria-current=\"page\"" : string.Empty) data-i18n-en="Recipes">Receitas</a></li>
+                            <li><a class="nav-menu-link @(currentPage == "/pricehistory" ? "is-active" : string.Empty)" href="/PriceHistory" @(currentPage == "/pricehistory" ? "aria-current=\"page\"" : string.Empty) data-i18n-en="Price history">Histórico de Preços</a></li>
+                            <!--<li><a class="nav-menu-link @(currentPage == "/settings" ? "is-active" : string.Empty)" href="/Settings" @(currentPage == "/settings" ? "aria-current=\"page\"" : string.Empty) data-i18n-en="Settings">Configurações</a></li>
+                            <li><a class="nav-menu-link @(currentPage == "/about" ? "is-active" : string.Empty)" href="/About" @(currentPage == "/about" ? "aria-current=\"page\"" : string.Empty) data-i18n-en="About">Sobre</a></li>-->
+                        </ul>
+                        <div class="nav-actions">
+                            <partial name="Shared/_LanguageSwitcher" />
+                            @if (User?.Identity?.IsAuthenticated ?? false)
+                            {
+                                <a class="nav-button nav-link" href="/Logout" data-i18n-en="Sign out">Sair</a>
+                            }
+                            else
+                            {
+                                <a class="nav-button nav-link" href="/Login" data-i18n-en="Sign in">Entrar</a>
+                            }
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </header>
+    }
+
+    <main role="main" class="container @(ViewData["MainClass"] ?? string.Empty)">
+        @RenderBody()
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2025 - Ficha Tecnica</p>
+    </footer>
+    <script src="~/js/language.js" asp-append-version="true"></script>
+    <script src="~/js/layout.js" asp-append-version="true"></script>
+    <script src="~/js/loading-overlay.js" asp-append-version="true"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

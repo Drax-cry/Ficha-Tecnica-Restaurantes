@@ -1,0 +1,36 @@
+@page "/Settings"
+@model SettingsModel
+@{
+    ViewData["Title"] = "Configurações";
+    ViewData["BodyClass"] = "settings-page";
+}
+
+<section class="settings" aria-labelledby="settings-title">
+    <header class="settings-header">
+        <p class="settings-eyebrow" data-i18n-en="Preferences">Preferências</p>
+        <h1 id="settings-title" data-i18n-en="Settings">Configurações</h1>
+        <p class="settings-description" data-i18n-en="Manage application preferences, including language.">Gerencie preferências do aplicativo, incluindo idioma.</p>
+    </header>
+
+    <div class="settings-grid">
+        <section class="settings-card" aria-labelledby="language-card-title">
+            <header>
+                <h2 id="language-card-title" data-i18n-en="Language">Idioma</h2>
+                <p data-i18n-en="Choose the language displayed across the application.">Escolha o idioma exibido em todo o aplicativo.</p>
+            </header>
+            <div class="settings-card-body">
+                <p class="settings-card-description" data-i18n-en="The application starts in Portuguese. Use the toggle below to switch to English when needed.">O aplicativo inicia em português. Use a alternância abaixo para mudar para inglês quando necessário.</p>
+                <div class="settings-language-control">
+                    <partial name="Shared/_LanguageSwitcher" />
+                </div>
+                <p class="settings-card-hint" data-i18n-en="Your selection is saved in this browser.">Sua seleção é salva neste navegador.</p>
+            </div>
+        </section>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        window?.appLanguage?.sync?.();
+    </script>
+}

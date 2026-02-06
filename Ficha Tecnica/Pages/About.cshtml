@@ -1,0 +1,117 @@
+@page "/About"
+@model Ficha_Tecnica.Pages.AboutModel
+@{
+    ViewData["Title"] = "Sobre";
+    ViewData["BodyClass"] = "about-page";
+}
+
+<section class="about-hero" aria-labelledby="about-title">
+    <p class="about-eyebrow">PROMETHEUS RFID</p>
+    <h1 id="about-title">Sistema de Gestão de Restaurantes orientado por dados</h1>
+    <p class="about-description">
+        Desenvolvido para operações gastronômicas que exigem precisão, o sistema PROMETHEUS RFID reúne em uma única plataforma a gestão
+        de fichas técnicas, custos de produção e rastreabilidade completa dos insumos. A solução combina automação, integração com RFID
+        e analytics avançado para garantir decisões rápidas, lucrativas e em conformidade com os padrões sanitários.
+    </p>
+    <dl class="about-stats" role="list">
+        <div>
+            <dt>Versão atual</dt>
+            <dd>@Model.Version</dd>
+        </div>
+        <div>
+            <dt>Segmentos atendidos</dt>
+            <dd>Restaurantes, dark kitchens, centrais de produção e catering</dd>
+        </div>
+        <div>
+            <dt>Foco estratégico</dt>
+            <dd>Redução de desperdício, rastreabilidade e lucratividade sustentável</dd>
+        </div>
+    </dl>
+</section>
+
+<section class="about-grid" aria-label="Pilares do sistema">
+    <article class="about-card" aria-labelledby="pillar-operacional">
+        <h2 id="pillar-operacional">Excelência operacional</h2>
+        <p>
+            Controle granular de ingredientes, fichas técnicas padronizadas e cálculo automático de custo por porção eliminam retrabalho e
+            asseguram consistência na entrega. A atualização de preços em tempo real garante margens protegidas mesmo diante da variação de insumos.
+        </p>
+        <ul>
+            <li>Cadastro completo de ingredientes com histórico de fornecedores e preços.</li>
+            <li>Fichas técnicas com passos de preparo, rendimento e indicadores nutricionais.</li>
+            <li>Alertas inteligentes para rupturas de estoque e validade.</li>
+        </ul>
+    </article>
+
+    <article class="about-card" aria-labelledby="pillar-estrategico">
+        <h2 id="pillar-estrategico">Inteligência estratégica</h2>
+        <p>
+            Dashboards intuitivos conectam dados financeiros, operacionais e de vendas para sinalizar oportunidades de rentabilidade.
+            Métricas de desempenho, simulações de preço e cenários de margem permitem planejar cardápios com agilidade.
+        </p>
+        <ul>
+            <li>Comparativos automáticos entre custo real e sugerido.</li>
+            <li>Simulação de margem por canal de venda e por período.</li>
+            <li>Indicadores de popularidade e contribuição por receita.</li>
+        </ul>
+    </article>
+
+    <article class="about-card" aria-labelledby="pillar-conformidade">
+        <h2 id="pillar-conformidade">Conformidade e rastreabilidade</h2>
+        <p>
+            A tecnologia RFID combinada à trilha completa de insumos atende às normas da vigilância sanitária e facilita auditorias.
+            Cada lote é registrado desde a origem até o consumo, com anexos de laudos e certificados.
+        </p>
+        <ul>
+            <li>Controle de lotes, validade e cadeia fria integrado ao estoque.</li>
+            <li>Documentação digital anexada a cada ingrediente e fornecedor.</li>
+            <li>Relatórios de conformidade exportáveis em PDF, CSV e Excel.</li>
+        </ul>
+    </article>
+
+    <article class="about-card" aria-labelledby="pillar-suporte">
+        <h2 id="pillar-suporte">Suporte especializado</h2>
+        <p>
+            Implementação assistida por consultores gastronômicos e suporte técnico dedicado asseguram adoção rápida e contínua evolução do sistema.
+            Materiais de treinamento, central de ajuda e roadmap transparente mantêm a equipe alinhada.
+        </p>
+        <ul>
+            <li>Onboarding guiado com migração de fichas técnicas existentes.</li>
+            <li>Base de conhecimento com tutoriais passo a passo e vídeos.</li>
+            <li>Canal direto com especialistas para personalizações avançadas.</li>
+        </ul>
+    </article>
+</section>
+
+<section class="about-contact" aria-label="Contato e suporte">
+    <div>
+        <h2>Como podemos ajudar?</h2>
+        <p>
+            Nossa equipe está disponível para auxiliar na implantação, integração com ERPs, configuração de dispositivos RFID e treinamentos.
+            Entre em contato para agendar uma demonstração personalizada ou esclarecer dúvidas sobre contratos e conformidade.
+        </p>
+    </div>
+    <dl class="about-contact-details" role="list">
+        <div>
+            <dt>E-mail</dt>
+            <dd><a href="mailto:founder@prometheusrfid.com">founder@prometheusrfid.com</a></dd>
+        </div>
+        <div>
+            <dt>Telefone</dt>
+            <dd><a href="tel:+551130002400">+351 910433337</a> </dd>
+        </div>
+        <!--<div>
+            <dt>Documentação técnica</dt>
+            <dd><a href="https://docs.prometheusrfid.com" target="_blank" rel="noopener">docs.prometheusrfid.com</a></dd>
+        </div>-->
+    </dl>
+</section>
+
+<section class="about-legal" aria-label="Informações legais e certificações">
+    <h2>Compromissos legais</h2>
+    <ul>
+        <li>Conformidade com LGPD e boas práticas de segurança para proteção de dados sensíveis.</li>
+        <li>Processos alinhados às exigências da ANVISA para manipulação e rastreabilidade de alimentos.</li>
+        <li>Infraestrutura hospedada em provedores certificados ISO 27001, com backups criptografados.</li>
+    </ul>
+</section>

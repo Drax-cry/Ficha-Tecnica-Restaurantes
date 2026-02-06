@@ -1,0 +1,25 @@
+{
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5113"
+    },
+    "https": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DB_CONNECTION": "Server=127.0.0.1;Port=3307;Database=ficha_tecnica_restaurantes;Uid=ft-prod-access;Pwd=;",
+        "GOOGLE_PROJECT_ID": "modified-argon-476211-j9"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7126;http://localhost:5113"
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
+}

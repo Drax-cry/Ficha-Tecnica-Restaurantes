@@ -1,0 +1,177 @@
+@page "/Index"
+@model IndexModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Painel";
+    ViewData["BodyClass"] = "dashboard-page";
+    var culture = CultureInfo.GetCultureInfo("pt-PT");
+    var userName = !string.IsNullOrWhiteSpace(User.Identity?.Name) ? User.Identity?.Name : "gestor";
+}
+
+<section class="dashboard" aria-labelledby="dashboard-title">
+    <!--<header class="dashboard-hero">
+        <div class="dashboard-intro">
+            <p class="dashboard-eyebrow" data-i18n-en="Overview">Visão Geral</p>
+            <h1 id="dashboard-title"><span data-i18n-en="Hello">Olá</span>, @userName</h1>
+            <p class="dashboard-description" data-i18n-en="Monitor production costs, profitability, and key trends in one place.">
+                Monitore custos de produção, rentabilidade e tendências críticas em um só lugar.
+            </p>
+            @if (TempData["DashboardStatusMessage"] is string dashboardMessage && !string.IsNullOrWhiteSpace(dashboardMessage))
+            {
+                <p class="dashboard-status" role="status">@dashboardMessage</p>
+            }
+            <div class="dashboard-primary-actions" role="group" aria-label="Ações rápidas do painel" data-i18n-target="aria-label" data-i18n-en="Dashboard quick actions">
+                <a class="dashboard-action" href="/Reports/Export" role="button" data-i18n-en="Export report">Exportar relatório</a>
+            </div>
+        </div>
+        <form class="dashboard-filters" method="get" aria-label="Filtros do painel" data-i18n-target="aria-label" data-i18n-en="Dashboard filters">
+            <fieldset>
+                <legend data-i18n-en="Analysis period">Período de análise</legend>
+                <label for="filter-period" data-i18n-en="Period">Período</label>
+                <select id="filter-period" name="period">
+                    <option value="last7" selected="@(Model.ViewModel.SelectedPeriod == "last7")" data-i18n-en="Last 7 days">Últimos 7 dias</option>
+                    <option value="last30" selected="@(Model.ViewModel.SelectedPeriod == "last30")" data-i18n-en="Last 30 days">Últimos 30 dias</option>
+                    <option value="quarter" selected="@(Model.ViewModel.SelectedPeriod == "quarter")" data-i18n-en="Current quarter">Trimestre atual</option>
+                    <option value="year" selected="@(Model.ViewModel.SelectedPeriod == "year")" data-i18n-en="Current year">Ano atual</option>
+                </select>
+            </fieldset>
+            <div class="filter-grid">
+                <label for="filter-start" data-i18n-en="Start">Início</label>
+                <input id="filter-start" type="date" name="start" />
+                <label for="filter-end" data-i18n-en="End">Fim</label>
+                <input id="filter-end" type="date" name="end" />
+                <label for="filter-category" data-i18n-en="Category">Categoria</label>
+                <select id="filter-category" name="category">
+                    <option value="all" selected data-i18n-en="All segments">Todos os segmentos</option>
+                    <option value="starters" data-i18n-en="Starters">Entradas</option>
+                    <option value="mains" data-i18n-en="Main courses">Pratos principais</option>
+                    <option value="desserts" data-i18n-en="Desserts">Sobremesas</option>
+                    <option value="beverages" data-i18n-en="Beverages">Bebidas</option>
+                </select>
+            </div>
+            <div class="filter-actions">
+                <button type="submit" data-i18n-en="Apply filters">Aplicar filtros</button>
+                <a href="/Index" class="filter-reset" data-i18n-en="Reset">Limpar</a>
+            </div>
+        </form>
+    </header>-->
+
+    <section class="dashboard-metrics" aria-label="Indicadores principais" data-i18n-target="aria-label" data-i18n-en="Key indicators">
+        @foreach (var metric in Model.ViewModel.Metrics)
+        {
+            var trendClass = metric.Direction switch
+            {
+                TrendDirection.Up => "trend-up",
+                TrendDirection.Down => "trend-down",
+                _ => "trend-neutral"
+            };
+            <article class="metric-card">
+                <header>
+                    <p class="metric-title" data-i18n-en="@metric.TitleEn">@metric.Title</p>
+                    <span class="metric-trend @trendClass" data-i18n-en="@metric.TrendEn">@metric.Trend</span>
+                </header>
+                <p class="metric-value">@metric.Value</p>
+                <p class="metric-description" data-i18n-en="@metric.DescriptionEn">@metric.Description</p>
+            </article>
+        }
+    </section>
+
+    <section class="dashboard-grid" aria-label="Insights do período" data-i18n-target="aria-label" data-i18n-en="Period insights">
+        <article class="dashboard-panel" aria-labelledby="category-performance-title">
+            <header>
+                <h2 id="category-performance-title" data-i18n-en="Performance by category">Performance por categoria</h2>
+                <p data-i18n-en="Contribution share of dish groups.">Percentual de contribuição dos grupos de pratos.</p>
+            </header>
+            <ul class="category-list" role="list">
+                @foreach (var category in Model.ViewModel.CategoryPerformances)
+                {
+                    <li class="category-item">
+                        <div class="category-header">
+                            <span class="category-name" data-i18n-en="@category.NameEn">@category.Name</span>
+                            <span class="category-value">@category.ContributionPercentage.ToString("P0", culture)</span>
+                        </div>
+                        <div class="category-progress">
+                            <span style="width:@category.ContributionPercentage.ToString(System.Globalization.CultureInfo.InvariantCulture)%;"></span>
+                        </div>
+                        <p class="category-trend" data-i18n-en="@category.TrendLabelEn">@category.TrendLabel</p>
+                    </li>
+                }
+            </ul>
+        </article>
+
+        <article class="dashboard-panel" aria-labelledby="alerts-title">
+            <header>
+                <h2 id="alerts-title" data-i18n-en="Recent alerts">Alertas recentes</h2>
+                <p data-i18n-en="Track events that require immediate attention.">Acompanhe eventos que exigem atenção imediata.</p>
+            </header>
+            <ul class="alert-list" role="list">
+                @foreach (var alert in Model.ViewModel.Alerts)
+                {
+                    var severityClass = alert.Severity switch
+                    {
+                        DashboardAlertSeverity.Critical => "critical",
+                        DashboardAlertSeverity.Warning => "warning",
+                        _ => "info"
+                    };
+                    <li class="alert-item">
+                        <span class="alert-chip @severityClass" data-i18n-en="@alert.SeverityLabelEn">@alert.SeverityLabel</span>
+                        <div class="alert-content">
+                            <p class="alert-title" data-i18n-en="@alert.TitleEn">@alert.Title</p>
+                            <p class="alert-description" data-i18n-en="@alert.DescriptionEn">@alert.Description</p>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </article>
+    </section>
+
+    <section class="dashboard-grid" aria-label="Resultados e próximos passos" data-i18n-target="aria-label" data-i18n-en="Results and next steps">
+        <article class="dashboard-panel" aria-labelledby="top-recipes-title">
+            <header>
+                <h2 id="top-recipes-title" data-i18n-en="Most profitable recipes">Receitas mais rentáveis</h2>
+                <p data-i18n-en="Detailed view of dishes with the greatest return in the period.">Visão detalhada de pratos com maior retorno no período.</p>
+            </header>
+            <div class="table-wrapper" role="region" aria-live="polite">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th scope="col" data-i18n-en="Recipe">Receita</th>
+                            <th scope="col" data-i18n-en="Suggested price">Preço sugerido</th>
+                            <th scope="col" data-i18n-en="Cost">Custo</th>
+                            <th scope="col" data-i18n-en="Profit">Lucro</th>
+                            <th scope="col" data-i18n-en="Margin">Margem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var recipe in Model.ViewModel.TopRecipes)
+                        {
+                            <tr>
+                                <td>@recipe.Name</td>
+                                <td>@recipe.SuggestedPrice.ToString("C", culture)</td>
+                                <td>@recipe.Cost.ToString("C", culture)</td>
+                                <td>@recipe.Profit.ToString("C", culture)</td>
+                                <td>@recipe.Margin.ToString("P0", culture)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <article class="dashboard-panel" aria-labelledby="quick-actions-title">
+            <header>
+                <h2 id="quick-actions-title" data-i18n-en="Quick actions">Ações rápidas</h2>
+                <p data-i18n-en="Shortcuts to keep operations under control.">Atalhos para manter o controle da operação.</p>
+            </header>
+            <div class="quick-actions-grid">
+                @foreach (var action in Model.ViewModel.QuickActions)
+                {
+                    <a class="quick-action-card" href="@action.Url">
+                        <h3 data-i18n-en="@action.TitleEn">@action.Title</h3>
+                        <p data-i18n-en="@action.DescriptionEn">@action.Description</p>
+                    </a>
+                }
+            </div>
+        </article>
+    </section>
+</section>

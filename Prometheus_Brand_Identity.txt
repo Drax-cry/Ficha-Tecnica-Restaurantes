@@ -1,0 +1,79 @@
+PROMETHEUS RFID - Brand Identity & Colors
+
+🧭 Brand Overview
+Brand: PROMETHEUS RFID
+Slogan: "Designed for Precision"
+Concept: Tecnologia que conecta, simplifica e potencia negócios globalmente.
+Valores: Inovação, precisão, confiança e impacto global.
+Estilo visual: Minimalista, sofisticado, tecnológico.
+
+🖼️ Logo & Aplicação
+- Tipografia da Logo:
+  • "PROMETHEUS" → Fonte Porspec
+  • "RFID" → Fonte Outfit
+- Margem de segurança: altura da letra “O” em PROMETHEUS ao redor da logo.
+- Versões:
+  • Positiva – Preto sobre fundo claro.
+  • Negativa – Branco sobre fundo escuro.
+
+🎨 Paleta de Cores Oficiais
+1. Branco Acinzentado
+   HEX: #E0E2EE
+   RGB: 224, 226, 238
+   CMYK: 6%, 5%, 0%, 7%
+   Pantone: 656 C
+   Uso: Fundo claro, contraste suave
+
+2. Preto Profundo
+   HEX: #2A2A2A
+   RGB: 42, 42, 42
+   CMYK: 0%, 0%, 0%, 84%
+   Pantone: Black 7 C
+   Uso: Fundo escuro, identidade principal
+
+3. Cinza Escuro
+   HEX: #3F3F3F
+   RGB: 63, 63, 63
+   CMYK: 0%, 0%, 0%, 75%
+   Pantone: 447 C
+   Uso: Textos e contrastes médios
+
+4. Cinza Médio
+   HEX: #6B6B6E
+   RGB: 107, 107, 110
+   CMYK: 3%, 3%, 0%, 57%
+   Pantone: 424 C
+   Uso: Detalhes, elementos neutros
+
+5. Cinza Suave
+   HEX: #CDCDCD
+   RGB: 205, 205, 205
+   CMYK: 0%, 0%, 0%, 20%
+   Pantone: 427 C
+   Uso: Fundo secundário, divisores e áreas neutras
+
+🆎 Tipografia Oficial
+Fonte Principal: Outfit
+Estilos: Light / Regular / Medium / Bold
+Uso: Materiais institucionais e de comunicação.
+Características: geométrica, moderna, clara e tecnológica.
+
+⚡ Identidade Visual
+- Estilo: minimalista, tecnológico, confiável.
+- Símbolo: inspirado em uma coluna clássica — representa estabilidade, clareza e visão de futuro.
+- Aplicações recomendadas: fundos neutros, contraste forte entre preto e branco, foco em legibilidade e precisão.
+
+✅ Exemplo de uso em código (CSS)
+:root {
+  --prometheus-white: #E0E2EE;
+  --prometheus-black: #2A2A2A;
+  --prometheus-gray-dark: #3F3F3F;
+  --prometheus-gray-medium: #6B6B6E;
+  --prometheus-gray-light: #CDCDCD;
+}
+
+body {
+  background-color: var(--prometheus-white);
+  color: var(--prometheus-black);
+  font-family: 'Outfit', sans-serif;
+}

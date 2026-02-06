@@ -1,0 +1,658 @@
+@page "/Recipes"
+@using System.Globalization
+@using System.Linq
+@using System.Text.Encodings.Web
+@using System.Text.Json
+@model Ficha_Tecnica.Pages.RecipesModel
+@{
+    ViewData["Title"] = "Receitas";
+    ViewData["BodyClass"] = "recipes-page";
+    var ingredientData = JsonSerializer.Serialize(
+        Model.Ingredients.Select(i => new
+        {
+            id = i.Id,
+            name = i.Name,
+            unit = i.Unit,
+            costPerUnit = i.CostPerUnit,
+            displayCost = i.DisplayCost
+        }),
+        new JsonSerializerOptions
+        {
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        });
+}
+
+<section class="recipes-shell" aria-labelledby="recipes-title">
+    <header class="recipes-hero">
+        <div class="recipes-hero-content">
+            <p class="recipes-eyebrow" data-i18n-en="Culinary curation">Curadoria gastronómica</p>
+            <h1 id="recipes-title" data-i18n-en="Recipe collection">Coleção de receitas</h1>
+            <p class="recipes-description" data-i18n-en="Track recipe costs, profitability, and composition in real time for precise decisions and profitable menus.">
+                Acompanhe custos, rentabilidade e composição das receitas em tempo real para decisões precisas e menus lucrativos.
+            </p>
+            <div class="recipes-highlight-grid" role="list">
+                @foreach (var highlight in Model.HighlightTags)
+                {
+                    <article class="recipes-highlight" role="listitem">
+                        <div class="highlight-icon" aria-hidden="true">@Model.RenderIcon(highlight.IconKey)</div>
+                        <div class="highlight-content">
+                            <h2 data-i18n-en="@highlight.TitleEn">@highlight.Title</h2>
+                            <p data-i18n-en="@highlight.DescriptionEn">@highlight.Description</p>
+                        </div>
+                        <span class="highlight-metric" data-i18n-en="@highlight.MetricEn">@highlight.Metric</span>
+                    </article>
+                }
+            </div>
+            <div class="recipes-actions" aria-label="Ações principais" data-i18n-target="aria-label" data-i18n-en="Primary actions">
+                <a class="recipes-action primary" href="#receitas-ativas">
+                    <span class="action-icon" aria-hidden="true">@Model.RenderIcon("add")</span>
+                    <span data-i18n-en="View registered recipes">Ver receitas cadastradas</span>
+                </a>
+               <!-- <button class="recipes-action ghost" type="button">
+                    <span class="action-icon" aria-hidden="true">@Model.RenderIcon("import")</span>
+                     Importar fichas
+                 </button>-->
+            </div>
+        </div>
+        <aside class="recipes-hero-summary" aria-label="Indicadores de desempenho" data-i18n-target="aria-label" data-i18n-en="Performance indicators">
+            <div class="summary-header">
+                <div class="summary-icon" aria-hidden="true">@Model.RenderIcon("spark")</div>
+                <div>
+                    <p class="summary-eyebrow" data-i18n-en="Financial overview">Visão financeira</p>
+                    <p class="summary-title">
+                        <span>@Model.Summary.TotalRecipes</span>
+                        <span data-i18n-en="active recipes">receitas ativas</span>
+                    </p>
+                </div>
+            </div>
+            <dl class="summary-grid">
+                <div>
+                    <dt data-i18n-en="Average cost">Custo médio</dt>
+                    <dd data-i18n-en="@Model.FormatCurrencyEnglish(Model.Summary.AverageFoodCostValue)">@Model.Summary.AverageFoodCost</dd>
+                </div>
+                <div>
+                    <dt data-i18n-en="Average suggested price">Preço sugerido médio</dt>
+                    <dd data-i18n-en="@Model.FormatCurrencyEnglish(Model.Summary.AverageSuggestedPriceValue)">@Model.Summary.AverageSuggestedPrice</dd>
+                </div>
+                <div>
+                    <dt data-i18n-en="Average margin">Margem média</dt>
+                    <dd data-i18n-en="@Model.FormatPercentageEnglish(Model.Summary.AverageMarginValue)">@Model.Summary.AverageMargin</dd>
+                </div>
+               <!-- <div>
+                    <dt>Contribuição mensal</dt>
+                    <dd>@Model.Summary.MonthlyContribution</dd>
+                 </div>-->
+            </dl>
+            <footer class="summary-footer">
+                <p>
+                    <strong data-i18n-en="Last update:">Última atualização:</strong>
+                    <span data-i18n-en="@Model.Summary.LastUpdatedEn">@Model.Summary.LastUpdated</span>
+                </p>
+                <p class="summary-note" data-i18n-en="Update ingredient prices regularly to keep projected profitability on track.">
+                    Atualize preços de ingredientes periodicamente para manter a rentabilidade prevista.
+                </p>
+            </footer>
+        </aside>
+    </header>
+
+    @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+    {
+        <div class="status-banner" role="status">
+            <span class="status-icon" aria-hidden="true">@Model.RenderIcon(Model.StatusMessageTarget == "Category" ? "category-add" : "spark-lite")</span>
+            <div>
+                <p data-i18n-en="@Model.StatusMessageEn">@Model.StatusMessage</p>
+            </div>
+        </div>
+    }
+
+    <section class="recipe-intake" aria-labelledby="recipe-intake-title">
+        <header class="intake-header">
+            <div>
+                <p class="intake-eyebrow" data-i18n-en="Recipe onboarding">Onboarding de fichas</p>
+                <h2 id="recipe-intake-title"
+                    data-form-title
+                    data-mode-title-create="Adicionar nova receita"
+                    data-mode-title-create-en="Add new recipe"
+                    data-mode-title-edit="Editar receita"
+                    data-mode-title-edit-en="Edit recipe"
+                    data-i18n-en="Add new recipe">Adicionar nova receita</h2>
+                <p data-form-description
+                   data-mode-description-create="Centralize custos, ingredientes e margens antes de publicar no cardápio digital."
+                   data-mode-description-create-en="Centralize costs, ingredients, and margins before publishing to the digital menu."
+                   data-mode-description-edit="Atualize custos, ingredientes e margens para manter a ficha técnica correta."
+                   data-mode-description-edit-en="Update costs, ingredients, and margins to keep the recipe sheet accurate."
+                   data-i18n-en="Centralize costs, ingredients, and margins before publishing to the digital menu.">Centralize custos, ingredientes e margens antes de publicar no cardápio digital.</p>
+            </div>
+            <!--<div class="intake-helpers" role="list">
+                <article class="helper-card" role="listitem">
+                    <span class="helper-icon" aria-hidden="true">@Model.RenderIcon("document")</span>
+                    <div>
+                        <h3>Ficha técnica padronizada</h3>
+                        <p>Utilize pesos, unidades e custos atualizados para manter o CMV controlado.</p>
+                    </div>
+                </article>
+                <article class="helper-card" role="listitem">
+                    <span class="helper-icon" aria-hidden="true">@Model.RenderIcon("team")</span>
+                    <div>
+                        <h3>Colaboração em tempo real</h3>
+                        <p>Compartilhe com cozinha e compras para alinhar produção e abastecimento.</p>
+                    </div>
+                </article
+            </div>>-->
+        </header>
+
+        <div class="intake-grid">
+            <form id="recipe-editor" class="recipe-intake-form" method="post" asp-page-handler="SaveRecipe" enctype="multipart/form-data" data-recipe-form aria-label="Formulário para adicionar receita" data-i18n-target="aria-label" data-i18n-en="Form to add a recipe">
+                <input type="hidden" asp-for="RecipeInput.Id" />
+                <div class="intake-edit-banner" data-editing-banner hidden>
+                    <div class="edit-banner-details">
+                        <span class="banner-icon" aria-hidden="true">@Model.RenderIcon("edit")</span>
+                        <p>
+                            <span data-editing-label data-i18n-en="Active edit:">Edição ativa:</span>
+                            <strong data-editing-name></strong>
+                        </p>
+                    </div>
+                    <button type="button" class="edit-cancel" data-editing-cancel>
+                        <span data-i18n-en="Cancel editing">Cancelar edição</span>
+                    </button>
+                </div>
+                <div asp-validation-summary="ModelOnly" class="validation-summary" role="alert"></div>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label asp-for="RecipeInput.Name" data-i18n-en="Recipe name">Nome da receita</label>
+                        <input asp-for="RecipeInput.Name" type="text" placeholder="Ex.: Risotto de camarão" autocomplete="off" data-i18n-target="placeholder" data-i18n-en="e.g., Shrimp risotto" />
+                        <span asp-validation-for="RecipeInput.Name" class="validation-message"></span>
+                    </div>
+                    <div class="form-field">
+                        <label asp-for="RecipeInput.CategoryId" data-i18n-en="Category">Categoria</label>
+                        <select asp-for="RecipeInput.CategoryId" required>
+                            <option value="" data-i18n-en="Select a category">Selecione uma categoria</option>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <option value="@category.Value">@category.Label</option>
+                            }
+                        </select>
+                        <span asp-validation-for="RecipeInput.CategoryId" class="validation-message"></span>
+                    </div>
+                    <div class="form-field">
+                        <label asp-for="RecipeInput.Yield" data-i18n-en="Servings">Porções</label>
+                        <input asp-for="RecipeInput.Yield" type="number" min="1" step="1" placeholder="Ex.: 12" inputmode="numeric" autocomplete="off" data-i18n-target="placeholder" data-i18n-en="e.g., 12" />
+                        <span asp-validation-for="RecipeInput.Yield" class="validation-message"></span>
+                    </div>
+                    <div class="form-field">
+                        <label asp-for="RecipeInput.PreparationTime" data-i18n-en="Preparation time (minutes)">Tempo de preparo (minutos)</label>
+                        <input asp-for="RecipeInput.PreparationTime" type="number" min="0" step="1" placeholder="Ex.: 40" inputmode="numeric" autocomplete="off" data-i18n-target="placeholder" data-i18n-en="e.g., 40" />
+                        <span asp-validation-for="RecipeInput.PreparationTime" class="validation-message"></span>
+                    </div>
+                    <div class="form-field">
+                        <label asp-for="RecipeInput.TargetMargin" data-i18n-en="Estimated margin(%)">Margem estimada(%)</label>
+                        <div class="margin-control">
+                            <input asp-for="RecipeInput.TargetMargin" type="number" step="0.01" readonly aria-describedby="margin-output" />
+                        </div>
+                        <span asp-validation-for="RecipeInput.TargetMargin" class="validation-message"></span>
+                    </div>
+                    <div class="form-field">
+                        <label for="recipe-cost" data-i18n-en="Estimated cost (per serving)">Custo estimado (p/porção)</label>
+                        <div class="cost-input">
+                            <span class="currency" aria-hidden="true">€</span>
+                            <input id="recipe-cost" name="recipe-cost" type="text" value="@string.Format(CultureInfo.GetCultureInfo("pt-PT"), "{0:N2}", Model.RecipeInput.IngredientCost)" readonly aria-live="polite" />
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label asp-for="RecipeInput.SuggestedPrice" data-i18n-en="Selling price (per serving)">Preço de venda (p/porção)</label>
+                        <div class="cost-input">
+                            <span class="currency" aria-hidden="true">€</span>
+                            <input asp-for="RecipeInput.SuggestedPrice" type="number" step="0.01" min="0" inputmode="decimal" />
+                        </div>
+                        <input type="hidden" id="RecipeInput_IsManualPrice" name="RecipeInput.IsManualPrice" value="@(Model.RecipeInput.IsManualPrice ? "true" : "false")" />
+                        <span asp-validation-for="RecipeInput.SuggestedPrice" class="validation-message"></span>
+                    </div>
+                </div>
+
+                <div class="form-stack">
+                    <div class="form-field">
+                        <label asp-for="RecipeInput.Description" data-i18n-en="Description and brief">Descrição e briefing</label>
+                        <textarea asp-for="RecipeInput.Description" rows="4" placeholder="Detalhe o conceito do prato, público e pontos de atenção." data-i18n-target="placeholder" data-i18n-en="Outline the dish concept, audience, and key points."></textarea>
+                    </div>
+                    <div class="form-field image-field">
+                        <label asp-for="RecipeInput.ImageUpload" data-i18n-en="Recipe image">Imagem da receita</label>
+                        <div class="image-uploader" data-image-control>
+                            <div class="image-preview" data-image-preview hidden>
+                                <img src="" alt="Pré-visualização da receita" data-image-preview-img data-i18n-target="alt" data-i18n-en="Recipe preview" />
+                                <button type="button" class="recipes-action ghost image-remove" data-image-remove>
+                                    <span class="action-icon" aria-hidden="true">@Model.RenderIcon("trash")</span>
+                                    <span data-i18n-en="Remove image">Remover imagem</span>
+                                </button>
+                            </div>
+                            <div class="image-placeholder" data-image-placeholder>
+                                <p data-i18n-en="Upload an image in JPG, PNG, GIF, or WEBP (max. 5&nbsp;MB).">Carregue uma imagem em JPG, PNG, GIF ou WEBP (máx. 5&nbsp;MB).</p>
+                            </div>
+                            <input asp-for="RecipeInput.ImageUpload" type="file" accept="image/*" data-image-input />
+                            <input type="hidden" asp-for="RecipeInput.ImagePath" data-image-path data-preview-url="@Model.RecipeInput.ImagePreviewUrl" />
+                            <input type="hidden" asp-for="RecipeInput.ExistingImagePath" data-image-existing />
+                            <input type="hidden" asp-for="RecipeInput.RemoveImage" data-image-remove-flag />
+                            <span asp-validation-for="RecipeInput.ImageUpload" class="validation-message"></span>
+                        </div>
+                    </div>
+                    <div class="ingredient-panel" aria-label="Gestão de ingredientes">
+                        <div class="ingredient-header">
+                            <h3 data-i18n-en="Key ingredients">Ingredientes principais</h3>
+                            <p data-i18n-en="Add items with standardized units to calculate costs automatically.">Adicione itens com unidades padronizadas para calcular o custo automaticamente.</p>
+                        </div>
+                        <span asp-validation-for="RecipeInput.Ingredients" class="validation-message"></span>
+                        <div class="ingredient-grid" data-ingredient-inputs>
+                            <div class="form-field">
+                                <label for="ingredient-search" data-i18n-en="Search ingredient">Buscar ingrediente</label>
+                                <div class="ingredient-search">
+                                    <span class="search-icon" aria-hidden="true">@Model.RenderIcon("search")</span>
+                                    <input id="ingredient-search" type="search" placeholder="Comece a digitar para localizar" autocomplete="off" list="ingredient-options" data-ingredient-search data-i18n-target="placeholder" data-i18n-en="Start typing to find" />
+                                    <datalist id="ingredient-options">
+                                        @foreach (var ingredient in Model.Ingredients)
+                                        {
+                                            <option value="@ingredient.Name" data-id="@ingredient.Id" data-unit="@ingredient.Unit" data-cost="@ingredient.CostPerUnit" data-label="@ingredient.DisplayCost"></option>
+                                        }
+                                    </datalist>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label for="ingredient-quantity" data-i18n-en="Quantity">Quantidade</label>
+                                <div class="quantity-input">
+                                    <input id="ingredient-quantity" type="number" step="0.01" min="0" placeholder="0,00" data-ingredient-quantity inputmode="decimal" data-i18n-target="placeholder" data-i18n-en="0.00" />
+                                    <span class="unit-label" data-ingredient-unit>un</span>
+                                </div>
+                            </div>
+                            <div class="form-field">
+                                <label for="ingredient-cost" data-i18n-en="Estimated cost">Custo estimado</label>
+                                <div class="cost-input">
+                                    <span class="currency" aria-hidden="true">€</span>
+                                    <input id="ingredient-cost" type="text" data-ingredient-cost readonly />
+                                </div>
+                            </div>
+                            <button type="button" class="recipes-action outline add-ingredient" data-ingredient-add>
+                                <span class="action-icon" aria-hidden="true">@Model.RenderIcon("add")</span>
+                                <span data-i18n-en="Add ingredient">Inserir ingrediente</span>
+                            </button>
+                        </div>
+                        <div class="ingredient-hidden" id="ingredient-hidden-fields">
+                            @for (var i = 0; i < Model.RecipeInput.Ingredients.Count; i++)
+                            {
+                                var ingredient = Model.RecipeInput.Ingredients[i];
+                                if (ingredient.IngredientId <= 0)
+                                {
+                                    continue;
+                                }
+
+                                <div data-hidden-item data-id="@ingredient.IngredientId">
+                                    <input type="hidden" asp-for="RecipeInput.Ingredients[i].IngredientId" data-hidden-field="id" />
+                                    <input type="hidden" asp-for="RecipeInput.Ingredients[i].IngredientName" data-hidden-field="name" />
+                                    <input type="hidden" asp-for="RecipeInput.Ingredients[i].Quantity" data-hidden-field="quantity" />
+                                    <input type="hidden" asp-for="RecipeInput.Ingredients[i].Unit" data-hidden-field="unit" />
+                                    <input type="hidden" asp-for="RecipeInput.Ingredients[i].CostPerUnit" data-hidden-field="cost" />
+                                </div>
+                            }
+                        </div>
+                        <ul class="ingredient-list" aria-live="polite" data-ingredient-list>
+                            @if (Model.RecipeInput.Ingredients.Count == 0 || Model.RecipeInput.Ingredients.All(i => i.IngredientId <= 0))
+                            {
+                                <li class="ingredient-placeholder">
+                                    <span data-i18n-en="No ingredients added yet.">Nenhum ingrediente adicionado ainda.</span>
+                                </li>
+                            }
+                            else
+                            {
+                                for (var index = 0; index < Model.RecipeInput.Ingredients.Count; index++)
+                                {
+                                    var ingredient = Model.RecipeInput.Ingredients[index];
+                                    if (ingredient.IngredientId <= 0)
+                                    {
+                                        continue;
+                                    }
+                                    <li class="ingredient-item" data-ingredient-item data-id="@ingredient.IngredientId" data-quantity="@ingredient.Quantity.ToString("0.##", CultureInfo.InvariantCulture)" data-unit="@ingredient.Unit" data-cost="@ingredient.CostPerUnit.ToString("0.00", CultureInfo.InvariantCulture)">
+                                        <div>
+                                            <strong>@ingredient.IngredientName</strong>
+                                            <span class="ingredient-meta">@ingredient.Quantity.ToString("0.##", CultureInfo.InvariantCulture) @ingredient.Unit • custo por unidade @string.Format("€ {0:N2}", ingredient.CostPerUnit)</span>
+                                        </div>
+                                        <button type="button" class="ingredient-remove" data-ingredient-remove aria-label="Remover ingrediente">
+                                            <span aria-hidden="true">@Model.RenderIcon("trash")</span>
+                                        </button>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                        <span class="validation-message">@Html.ValidationMessage("RecipeInput.Ingredients")</span>
+                    </div>
+                </div>
+
+                <footer class="intake-footer">
+                    <!--<div class="footer-note">
+                        <span class="note-icon" aria-hidden="true">@Model.RenderIcon("shield")</span>
+                        <p>Os dados serão validados com a ficha de custos antes da publicação no menu.</p>
+                    </div>-->
+                    <div class="footer-actions">
+                        <button type="reset" class="recipes-action ghost" data-ingredient-reset>
+                            <span class="action-icon" aria-hidden="true">@Model.RenderIcon("reset")</span>
+                            <span data-i18n-en="Clear form">Limpar formulário</span>
+                        </button>
+                        <button type="submit" class="recipes-action primary" data-submit-action>
+                            <span class="action-icon" aria-hidden="true">@Model.RenderIcon("spark")</span>
+                            <span data-submit-text
+                                  data-mode-submit-create="Salvar receita"
+                                  data-mode-submit-create-en="Save recipe"
+                                  data-mode-submit-edit="Atualizar receita"
+                                  data-mode-submit-edit-en="Update recipe"
+                                  data-i18n-en="Save recipe">Salvar receita</span>
+                        </button>
+                    </div>
+                </footer>
+            </form>
+
+            <aside class="category-panel" aria-labelledby="category-panel-title">
+                <h3 id="category-panel-title" data-i18n-en="Manage categories">Gerir categorias</h3>
+                <p data-i18n-en="Organize the recipe portfolio by creating custom categories.">Organize o portfólio de receitas criando categorias personalizadas.</p>
+                <form method="post" asp-page-handler="CreateCategory" class="category-form">
+                    <div class="validation-summary" asp-validation-summary="ModelOnly"></div>
+                    <div class="form-field">
+                        <label asp-for="CategoryInput.Name" data-i18n-en="Category name"></label>
+                        <input asp-for="CategoryInput.Name" type="text" placeholder="Ex.: Entradas" autocomplete="off" data-i18n-target="placeholder" data-i18n-en="e.g., Starters" />
+                        <span asp-validation-for="CategoryInput.Name" class="validation-message"></span>
+                    </div>
+                    <div class="form-field">
+                        <label asp-for="CategoryInput.Description" data-i18n-en="Description (optional)"></label>
+                        <input asp-for="CategoryInput.Description" type="text" placeholder="Descrição opcional" autocomplete="off" data-i18n-target="placeholder" data-i18n-en="Optional description" />
+                    </div>
+                    <button type="submit" class="recipes-action outline">
+                        <span class="action-icon" aria-hidden="true">@Model.RenderIcon("category-add")</span>
+                        <span data-i18n-en="Create category">Criar categoria</span>
+                    </button>
+                </form>
+            </aside>
+        </div>
+    </section>
+
+    <section class="recipes-board" id="receitas-ativas" aria-labelledby="recipes-board-title">
+        <header class="board-toolbar">
+            <div>
+                <h2 id="recipes-board-title" data-i18n-en="Registered recipes">Receitas cadastradas</h2>
+                <p data-i18n-en="Filter by name, category, and margin to prioritize actions.">Filtre por nome, categoria e margem para priorizar ações.</p>
+            </div>
+            <form class="recipes-filters" aria-label="Filtros da coleção" data-i18n-target="aria-label" data-i18n-en="Collection filters">
+                <label class="filter-control" for="recipe-search">
+                    <span class="filter-icon" aria-hidden="true">@Model.RenderIcon("search")</span>
+                    <span class="sr-only" data-i18n-en="Search recipes by name">Pesquisar receita pelo nome</span>
+                    <input id="recipe-search" type="search" name="recipe-search" placeholder="Pesquisar receita" autocomplete="off" data-i18n-target="placeholder" data-i18n-en="Search recipe" />
+                </label>
+                <label class="filter-control" for="recipe-category">
+                    <span class="filter-icon" aria-hidden="true">@Model.RenderIcon("category")</span>
+                    <span class="sr-only" data-i18n-en="Filter recipes by category">Filtrar receitas por categoria</span>
+                    <select id="recipe-category" name="recipe-category">
+                        <option value="all" selected data-i18n-en="All categories">Todas as categorias</option>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category.Value" data-i18n-en="@((category.LabelEn ?? category.Label))">@category.Label</option>
+                        }
+                    </select>
+                </label>
+                <label class="filter-control" for="recipe-margin">
+                    <span class="filter-icon" aria-hidden="true">@Model.RenderIcon("margin")</span>
+                    <span class="sr-only" data-i18n-en="Filter recipes by margin">Filtrar receitas por margem</span>
+                    <select id="recipe-margin" name="recipe-margin">
+                        <option value="all" selected data-i18n-en="Any margin">Qualquer margem</option>
+                        <option value="high" data-i18n-en="Above 65%">Acima de 65%</option>
+                        <option value="medium" data-i18n-en="Between 40% and 65%">Entre 40% e 65%</option>
+                        <option value="low" data-i18n-en="Below 40%">Abaixo de 40%</option>
+                    </select>
+                </label>
+                <button class="recipes-action outline" type="reset">
+                    <span class="action-icon" aria-hidden="true">@Model.RenderIcon("reset")</span>
+                    <span data-i18n-en="Clear filters">Limpar filtros</span>
+                </button>
+            </form>
+        </header>
+
+        <div class="recipes-grid" role="list">
+            @if (!Model.Recipes.Any())
+            {
+                <article class="recipe-card empty" role="listitem">
+                    <header class="recipe-card-header">
+                        <div class="recipe-media" aria-hidden="true">
+                            <span class="media-icon">@Model.RenderIcon("category-manage")</span>
+                        </div>
+                        <div class="recipe-heading">
+                            <p class="recipe-category" data-i18n-en="No records">Sem registros</p>
+                            <h3 data-i18n-en="Create your first recipe sheet">Crie a sua primeira ficha técnica</h3>
+                            <p class="recipe-empty-message" data-i18n-en="Register a recipe to view costs, margins, and ingredients in this panel.">Cadastre uma receita para visualizar custos, margens e ingredientes neste painel.</p>
+                        </div>
+                    </header>
+                </article>
+            }
+            else
+            {
+                @foreach (var recipe in Model.Recipes)
+                {
+                    var recipePayload = JsonSerializer.Serialize(
+                        new
+                        {
+                            id = recipe.Id,
+                            name = recipe.Name,
+                            categoryId = recipe.CategoryId,
+                            category = recipe.Category,
+                            foodCost = recipe.FoodCost,
+                            foodCostValue = recipe.FoodCostValue,
+                            suggestedPrice = recipe.SuggestedPrice,
+                            suggestedPriceValue = recipe.SuggestedPriceValue,
+                            margin = recipe.Margin,
+                            marginValue = recipe.MarginValue,
+                            marginBand = recipe.MarginBand,
+                            contribution = recipe.Contribution,
+                            contributionValue = recipe.ContributionValue,
+                            preparationTime = recipe.PreparationTime,
+                            preparationTimeMinutes = recipe.PreparationTimeMinutes,
+                            yield = recipe.Yield,
+                            yieldQuantity = recipe.YieldQuantity,
+                            complexity = recipe.Complexity,
+                            complexityEn = recipe.ComplexityEn,
+                            topIngredients = recipe.TopIngredients,
+                            topIngredientsEn = recipe.TopIngredientsEn,
+                            ingredients = recipe.Ingredients.Select(i => new
+                            {
+                                ingredientId = i.IngredientId,
+                                ingredientName = i.IngredientName,
+                                quantity = i.Quantity,
+                                unit = i.Unit,
+                                costPerUnit = i.CostPerUnit,
+                            }),
+                            targetMargin = recipe.TargetMarginPercentage,
+                            description = recipe.Description ?? string.Empty,
+                            imageUrl = recipe.ImagePath,
+                            imageStoragePath = recipe.ImageStoragePath,
+                            lastUpdated = recipe.LastUpdated,
+                            lastUpdatedIso = recipe.LastUpdatedDate.ToString("O"),
+                        },
+                        new JsonSerializerOptions
+                        {
+                            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                        });
+
+                    var hasImage = !string.IsNullOrWhiteSpace(recipe.ImagePath);
+                    var mediaBackground = $"radial-gradient(circle at 20% 20%, {recipe.AccentColor} 0%, rgba(255,255,255,0.05) 60%, rgba(42,42,42,0.2) 100%)";
+
+                    <article class="recipe-card" role="listitem"
+                             data-recipe-card
+                             data-name="@recipe.Name"
+                             data-category-id="@recipe.CategoryId"
+                             data-category="@recipe.Category"
+                             data-margin-band="@recipe.MarginBand"
+                             data-search="@recipe.SearchKeywords"
+                             data-recipe='@recipePayload'>
+                        <header class="recipe-card-header">
+                            <div class="recipe-media@(hasImage ? " has-image" : string.Empty)" style="@(hasImage ? null : $"background: {mediaBackground};")">
+                                @if (hasImage)
+                                {
+                                    <img src="@recipe.ImagePath" alt="Imagem da receita @recipe.Name" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="media-icon" aria-hidden="true">@Model.RenderIcon(recipe.IconKey)</span>
+                                }
+                            </div>
+                            <div class="recipe-heading">
+                                <p class="recipe-category">@recipe.Category</p>
+                                <h3>@recipe.Name</h3>
+                                <div class="recipe-meta">
+                                    <span>
+                                        <span class="meta-icon" aria-hidden="true">@Model.RenderIcon("timer")</span>
+                                        <span data-i18n-en="@Model.FormatPreparationTimeEnglish(recipe.PreparationTimeMinutes)">@recipe.PreparationTime</span>
+                                    </span>
+                                    <span>
+                                        <span class="meta-icon" aria-hidden="true">@Model.RenderIcon("yield")</span>
+                                        <span data-i18n-en="@Model.FormatYieldEnglish(recipe.YieldQuantity)">@recipe.Yield</span>
+                                    </span>
+                                    <span>
+                                        <span class="meta-icon" aria-hidden="true">@Model.RenderIcon("complexity")</span>
+                                        <span data-i18n-en="@recipe.ComplexityEn">@recipe.Complexity</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="recipe-flags">
+                                @if (recipe.IsSeasonal)
+                                {
+                                    <span class="recipe-flag is-seasonal">
+                                        <span class="flag-icon" aria-hidden="true">@Model.RenderIcon("season")</span>
+                                        <span data-i18n-en="Seasonal">Sazonal</span>
+                                    </span>
+                                }
+                                @if (recipe.RequiresRevision)
+                                {
+                                    <span class="recipe-flag is-revision">
+                                        <span class="flag-icon" aria-hidden="true">@Model.RenderIcon("alert")</span>
+                                        <span data-i18n-en="Review costs">Revisar custos</span>
+                                    </span>
+                                }
+                            </div>
+                        </header>
+
+                        <div class="recipe-body">
+                            <dl class="recipe-metrics">
+                                <div>
+                                    <dt data-i18n-en="Cost">Custo</dt>
+                                    <dd data-i18n-en="@Model.FormatCurrencyEnglish(recipe.FoodCostValue)">@recipe.FoodCost</dd>
+                                </div>
+                                <div>
+                                    <dt data-i18n-en="Suggested price">Preço sugerido</dt>
+                                    <dd data-i18n-en="@Model.FormatCurrencyEnglish(recipe.SuggestedPriceValue)">@recipe.SuggestedPrice</dd>
+                                </div>
+                                <div>
+                                    <dt data-i18n-en="Margin">Margem</dt>
+                                    <dd data-i18n-en="@Model.FormatPercentageEnglish(recipe.MarginValue)">@recipe.Margin</dd>
+                                </div>
+                                <div>
+                                    <dt data-i18n-en="Contribution">Contribuição</dt>
+                                    <dd data-i18n-en="@Model.FormatCurrencyEnglish(recipe.ContributionValue)">@recipe.Contribution</dd>
+                                </div>
+                            </dl>
+                            <div class="recipe-ingredients" aria-label="Principais ingredientes" data-i18n-target="aria-label" data-i18n-en="Top ingredients">
+                                <h4 data-i18n-en="Top ingredients">Principais ingredientes</h4>
+                                <ul>
+                                    @for (var ingredientIndex = 0; ingredientIndex < recipe.TopIngredients.Count; ingredientIndex++)
+                                    {
+                                        var ingredient = recipe.TopIngredients[ingredientIndex];
+                                        var ingredientEn = recipe.TopIngredientsEn.Count > ingredientIndex ? recipe.TopIngredientsEn[ingredientIndex] : ingredient;
+                                        <li>
+                                            <span class="ingredient-icon" aria-hidden="true">@Model.RenderIcon("ingredient")</span>
+                                            <span data-i18n-en="@ingredientEn">@ingredient</span>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+
+                        <footer class="recipe-footer">
+                            <div class="recipe-updates">
+                                <span class="updates-icon" aria-hidden="true">@Model.RenderIcon("calendar")</span>
+                                <span data-i18n-en="Updated on @Model.FormatDateEnglish(recipe.LastUpdatedDate)">Atualizado em @recipe.LastUpdated</span>
+                            </div>
+                            <div class="recipe-actions">
+                                <button type="button" class="recipes-action ghost" data-recipe-view>
+                                    <span class="action-icon" aria-hidden="true">@Model.RenderIcon("eye")</span>
+                                    <span data-i18n-en="View sheet">Visualizar ficha</span>
+                                </button>
+                                <form method="post" asp-page-handler="ExportRecipe" asp-route-id="@recipe.Id" class="recipe-export-form">
+                                    <button type="submit" class="recipes-action outline" data-recipe-export>
+                                        <span class="action-icon" aria-hidden="true">@Model.RenderIcon("document")</span>
+                                        <span data-i18n-en="Export sheet">Exportar ficha</span>
+                                    </button>
+                                </form>
+                                <button type="button" class="recipes-action primary" data-recipe-edit>
+                                    <span class="action-icon" aria-hidden="true">@Model.RenderIcon("edit")</span>
+                                    <span data-i18n-en="Edit costs">Editar custos</span>
+                                </button>
+                            </div>
+                        </footer>
+                    </article>
+                }
+
+                <article class="recipe-card empty" role="listitem" data-empty-filter hidden>
+                    <header class="recipe-card-header">
+                        <div class="recipe-media" aria-hidden="true">
+                            <span class="media-icon">@Model.RenderIcon("search")</span>
+                        </div>
+                        <div class="recipe-heading">
+                            <p class="recipe-category" data-i18n-en="No results">Nenhum resultado</p>
+                            <h3 data-i18n-en="Adjust the filters">Ajuste os filtros</h3>
+                            <p class="recipe-empty-message" data-i18n-en="Try changing the filters or clearing the search to see the recipes again.">Tente alterar os filtros ou limpar a pesquisa para visualizar as receitas novamente.</p>
+                        </div>
+                    </header>
+                </article>
+            }
+        </div>
+    </section>
+
+    <dialog class="recipe-dialog" data-recipe-dialog aria-labelledby="recipe-dialog-title">
+        <div class="recipe-dialog-content">
+            <header class="recipe-dialog-header">
+                <div>
+                    <p class="recipe-dialog-category" data-dialog-category></p>
+                    <h2 id="recipe-dialog-title" data-dialog-title></h2>
+                </div>
+                <button type="button" class="recipe-dialog-close" data-dialog-close aria-label="Fechar detalhes" data-i18n-target="aria-label" data-i18n-en="Close details">
+                    &times;
+                </button>
+            </header>
+            <div class="recipe-dialog-media" data-dialog-image-wrapper hidden>
+                <img src="" alt="" data-dialog-image />
+            </div>
+            <dl class="recipe-dialog-metrics" data-dialog-metrics></dl>
+            <section class="recipe-dialog-section">
+                <h3 data-i18n-en="Registered ingredients">Ingredientes cadastrados</h3>
+                <ul class="recipe-dialog-list" data-dialog-ingredients></ul>
+            </section>
+        </div>
+    </dialog>
+
+    <aside class="recipes-sidepanel" aria-labelledby="recipes-sidepanel-title">
+        <h2 id="recipes-sidepanel-title" data-i18n-en="Management suggestions">Sugestões de gestão</h2>
+        <ul class="sidepanel-list">
+            <li>
+                <span class="sidepanel-icon" aria-hidden="true">@Model.RenderIcon("sync")</span>
+                <span data-i18n-en="Sync ingredient prices weekly to anticipate margin changes.">Sincronize preços de ingredientes semanalmente para antecipar variações de margem.</span>
+            </li>
+            <li>
+                <span class="sidepanel-icon" aria-hidden="true">@Model.RenderIcon("analytics")</span>
+                <span data-i18n-en="Analyze performance by category and highlight dishes with higher contribution.">Analise o desempenho por categoria e destaque pratos com maior contribuição.</span>
+            </li>
+            <li>
+                <span class="sidepanel-icon" aria-hidden="true">@Model.RenderIcon("team")</span>
+                <span data-i18n-en="Share updated recipe sheets with the operations team to ensure consistency.">Compartilhe fichas técnicas atualizadas com a equipa operacional para garantir padronização.</span>
+            </li>
+        </ul>
+    </aside>
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="/css/recipes.css" />
+}
+
+@section Scripts {
+    <script id="recipe-ingredient-data" type="application/json">@Html.Raw(ingredientData)</script>
+    <script src="/js/recipes.js" defer></script>
+}
