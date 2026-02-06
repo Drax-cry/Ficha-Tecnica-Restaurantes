@@ -241,5 +241,44 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+// Seed: criar usuário admin (apenas se não existir)
+// Coloque ANTES de app.Run();
+using (var scope = app.Services.CreateScope())
+{
+    var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("SeedAdmin");
+
+    try
+    {
+        // Ajuste esse método conforme seu repositório:
+        // Se não tiver GetByUsernameAsync, troque pelo método equivalente (GetByEmailAsync, ExistsAsync, etc.)
+        var existing = await userRepository.GetByUsernameAsync("admin");
+
+        if (existing == null)
+        {
+            var (hash, salt) = passwordHasher.HashPassword("123456");
+
+            var user = new UserAccount
+            {
+                Username = "admin",
+                Email = "admin@example.com",
+                PasswordHash = hash,
+                Salt = salt
+            };
+
+            await userRepository.CreateUserAsync(user);
+            logger.LogInformation("Usuário admin criado com sucesso.");
+        }
+        else
+        {
+            logger.LogInformation("Usuário admin já existe. Seed ignorado.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Erro ao criar usuário admin no seed.");
+    }
+}
 
 app.Run();
