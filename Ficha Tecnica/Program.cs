@@ -23,6 +23,7 @@ if (string.IsNullOrWhiteSpace(googleProjectId))
 {
     googleProjectId = builder.Configuration["GOOGLE_CLOUD_PROJECT"];
 }
+
 if (string.IsNullOrWhiteSpace(googleProjectId))
 {
     googleProjectId = builder.Configuration["GOOGLE_PROJECT_ID"];
@@ -45,31 +46,33 @@ if (!string.IsNullOrWhiteSpace(googleProjectId))
     builder.Logging.AddGoogle(new LoggingServiceOptions
     {
         ProjectId = googleProjectId,
-        Options = LoggingOptions.Create(logName: normalizedGoogleLogName)
+        Options = LoggingOptions.Create(
+            logName: normalizedGoogleLogName)
     });
 
     googleLoggingEnabled = true;
 }
 
 builder.Services.AddHttpClient();
-builder.Services.AddMemoryCache();
 
+// Add services to the container.
+builder.Services.AddMemoryCache();
 builder.Services.AddRazorPages(options =>
 {
+    // Define the login page as the startup (root) route.
     options.Conventions.AddPageRoute("/Login", "");
 });
-
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-.AddCookie(options =>
-{
-    options.LoginPath = "/Login";
-    options.LogoutPath = "/Logout";
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
-    options.SlidingExpiration = true;
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Strict;
-});
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Login";
+        options.LogoutPath = "/Logout";
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+        options.SlidingExpiration = true;
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+    });
 
 builder.Services.AddAntiforgery(options =>
 {
@@ -84,7 +87,8 @@ if (string.IsNullOrWhiteSpace(connectionString))
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
-    throw new InvalidOperationException("Configure a connection string.");
+    throw new InvalidOperationException(
+        "A connection string named 'DefaultConnection' must be configured via configuration files or the DB_CONNECTION environment variable.");
 }
 
 var connectionStringBuilder = new MySqlConnectionStringBuilder(connectionString);
@@ -92,7 +96,38 @@ if (connectionStringBuilder.SslMode == MySqlSslMode.None)
 {
     connectionStringBuilder.SslMode = MySqlSslMode.Required;
 }
+
 connectionString = connectionStringBuilder.ConnectionString;
+
+var recipeImageStorageSection = builder.Configuration.GetSection(RecipeImageStorageOptions.SectionName);
+var recipeImageStorageOptions = recipeImageStorageSection.Get<RecipeImageStorageOptions>();
+
+builder.Services.Configure<RecipeImageStorageOptions>(recipeImageStorageSection);
+
+var serverConnectionProbeSection = builder.Configuration.GetSection(ServerConnectionProbeOptions.SectionName);
+builder.Services.Configure<ServerConnectionProbeOptions>(options =>
+{
+    serverConnectionProbeSection.Bind(options);
+
+    if (string.IsNullOrWhiteSpace(options.Url))
+    {
+        var fallbackUrl = builder.Configuration["SERVER_PROBE_URL"];
+        if (!string.IsNullOrWhiteSpace(fallbackUrl))
+        {
+            options.Url = fallbackUrl;
+        }
+    }
+});
+
+var databaseConnectionProbeSection = builder.Configuration.GetSection(DatabaseConnectionProbeOptions.SectionName);
+builder.Services.Configure<DatabaseConnectionProbeOptions>(options =>
+{
+    databaseConnectionProbeSection.Bind(options);
+    options.ConnectionString = connectionString;
+});
+
+builder.Services.AddHostedService<ServerConnectionProbeService>();
+builder.Services.AddHostedService<DatabaseConnectionProbeService>();
 
 builder.Services.AddScoped<IUserRepository>(_ => new UserRepository(connectionString));
 builder.Services.AddScoped<ICategoryRepository>(_ => new CategoryRepository(connectionString));
@@ -101,58 +136,110 @@ builder.Services.AddScoped<ISupplierRepository>(_ => new SupplierRepository(conn
 builder.Services.AddScoped<IRecipeCategoryRepository>(_ => new RecipeCategoryRepository(connectionString));
 builder.Services.AddScoped<IRecipeRepository>(_ => new RecipeRepository(connectionString));
 builder.Services.AddScoped<IPriceMovementRepository>(_ => new PriceMovementRepository(connectionString));
-
 builder.Services.AddSingleton<IRecipePdfExporter, RecipePdfExporter>();
 builder.Services.AddSingleton<IDashboardReportPdfExporter, DashboardReportPdfExporter>();
 builder.Services.AddSingleton<ILoginRateLimiter, LoginRateLimiter>();
 builder.Services.AddSingleton<PasswordHasher>();
+builder.Services.AddSingleton<IMalwareScanner, SignatureMalwareScanner>();
+builder.Services.AddSingleton<IRecipeImageStorage, RecipeImageStorage>();
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapRazorPages();
+var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+var startupLogger = loggerFactory.CreateLogger("Startup");
 
-
-// 🔥🔥🔥 CRIAR ADMIN AUTOMÁTICO NO BANCO 🔥🔥🔥
-// só cria se não existir
-using (var scope = app.Services.CreateScope())
+if (googleLoggingEnabled)
 {
-    var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-    var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("ADMIN-SEED");
+    startupLogger.LogInformation(
+        "Google Cloud logging configured for project {ProjectId} with log name {LogName}.",
+        googleProjectId,
+        normalizedGoogleLogName);
+}
+else
+{
+    startupLogger.LogWarning(
+        "Google Cloud logging is not configured. Set GoogleCloud:ProjectId in appsettings.json (e.g. Ficha Tecnica/appsettings.json or appsettings.{Environment}.json) or assign the GOOGLE_CLOUD_PROJECT/GOOGLE_PROJECT_ID environment variable to enable cloud logs.");
+}
 
-    try
+var applicationLifetime = app.Services.GetRequiredService<IHostApplicationLifetime>();
+applicationLifetime.ApplicationStarted.Register(() =>
+    startupLogger.LogInformation(
+        "Application started at {TimestampUtc} in {Environment} environment.",
+        DateTimeOffset.UtcNow,
+        app.Environment.EnvironmentName));
+
+applicationLifetime.ApplicationStopping.Register(() =>
+    startupLogger.LogInformation(
+        "Application stopping at {TimestampUtc}.",
+        DateTimeOffset.UtcNow));
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+
+var imageSources = new List<string>
+{
+    "'self'",
+    "data:",
+};
+
+static void TryAddImageSource(ICollection<string> sources, string? source)
+{
+    if (string.IsNullOrWhiteSpace(source))
     {
-        var existing = await userRepository.GetByUsernameAsync("admin");
-
-        if (existing == null)
-        {
-            var (hash, salt) = passwordHasher.HashPassword("123456"); // <<< TROQUE A SENHA
-
-            var user = new UserAccount
-            {
-                Username = "admin",
-                Email = "admin@admin.com",
-                PasswordHash = hash,
-                Salt = salt
-            };
-
-            await userRepository.CreateUserAsync(user);
-            logger.LogInformation("ADMIN CRIADO COM SUCESSO 🔐");
-        }
-        else
-        {
-            logger.LogInformation("ADMIN JA EXISTE");
-        }
+        return;
     }
-    catch (Exception ex)
+
+    if (!sources.Contains(source))
     {
-        logger.LogError(ex, "ERRO AO CRIAR ADMIN");
+        sources.Add(source);
     }
 }
+
+// Allow Google Cloud Storage hosted recipe images while keeping a restrictive default policy.
+TryAddImageSource(imageSources, "https://storage.googleapis.com");
+
+if (!string.IsNullOrWhiteSpace(recipeImageStorageOptions?.BucketName))
+{
+    var bucketName = recipeImageStorageOptions.BucketName.Trim();
+    if (!string.IsNullOrEmpty(bucketName))
+    {
+        TryAddImageSource(imageSources, $"https://{bucketName}.storage.googleapis.com");
+    }
+}
+
+var contentSecurityPolicy = string.Join("; ", new[]
+{
+    "default-src 'self'",
+    $"img-src {string.Join(' ', imageSources)}",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+});
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.TryAdd("Content-Security-Policy", contentSecurityPolicy);
+    context.Response.Headers.TryAdd("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.TryAdd("X-Frame-Options", "DENY");
+    await next();
+});
+
+app.UseStaticFiles();
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapRazorPages();
 
 app.Run();
