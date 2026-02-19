@@ -5,12 +5,12 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy the project file and restore dependencies
-COPY ["FichaTecnica/FichaTecnica.csproj", "FichaTecnica/"]
-RUN dotnet restore "FichaTecnica/FichaTecnica.csproj"
+COPY ["Ficha Tecnica/Ficha Tecnica.csproj", "Ficha Tecnica/"]
+RUN dotnet restore "Ficha Tecnica/Ficha Tecnica.csproj"
 
 # Copy the rest of the source and publish the app
 COPY . .
-RUN dotnet publish "FichaTecnica/FichaTecnica.csproj" -c Release -o /app/publish
+RUN dotnet publish "Ficha Tecnica/Ficha Tecnica.csproj" -c Release -o /app/publish
 
 # Stage 2 – create the runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
@@ -29,5 +29,4 @@ COPY --from=build /app/publish .
 
 # Expose the HTTP port used by Cloud Run and start the app
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
-ENTRYPOINT ["dotnet", "FichaTecnica.dll"]
-
+ENTRYPOINT ["dotnet", "Ficha Tecnica.dll"]
